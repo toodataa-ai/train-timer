@@ -19,6 +19,8 @@
   --accent: #f5c800;
 }
 body.shinkansen { --accent: #00aaff; }
+body.chuo      { --accent: #f15a22; }
+body.azusa     { --accent: #a05cc8; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body {
@@ -28,9 +30,9 @@ body {
   padding: 16px 12px 48px;
 }
 
-.route-selector { width: 100%; max-width: 560px; display: flex; gap: 8px; margin-bottom: 14px; }
+.route-selector { width: 100%; max-width: 560px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
 .route-btn {
-  flex: 1; padding: 10px 6px; border-radius: 10px;
+  padding: 10px 6px; border-radius: 10px;
   border: 2px solid var(--border); background: var(--panel);
   color: var(--dim); font-size: 12px; font-weight: 700;
   cursor: pointer; text-align: center; line-height: 1.5;
@@ -165,6 +167,8 @@ input[type=range]::-webkit-slider-thumb {
 <div class="route-selector">
   <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
+  <button class="route-btn"        id="rb2" onclick="selectRoute(2)">🟠 中央線<br><small>高尾→東京</small></button>
+  <button class="route-btn"        id="rb3" onclick="selectRoute(3)">🚆 あずさ<br><small>松本→新宿</small></button>
 </div>
 
 <div class="header">
@@ -267,6 +271,40 @@ const ROUTES = [
       {name:'京都',  ruby:'きょうと',    num:'SK09',ms:'key'},{name:'名古屋',ruby:'なごや',      num:'SK10',ms:'key'},
       {name:'新横浜',ruby:'しんよこはま',num:'SK11',ms:'key'},{name:'東京',  ruby:'とうきょう',  num:'SK12',ms:'key'},
     ]
+  },
+  {
+    badge:'JR 中央線（快速）', title:'🟠 高尾 → 東京 あそびタイマー',
+    sub:'電車が東京についたら あそびおわり', icon:'🟠', from:'高尾', to:'東京',
+    endIcon:'🗼', endTitle:'🟠 東京に到着！', whistle:'train',
+    stations:[
+      {name:'高尾',    ruby:'たかお',        num:'JC24',ms:'key'},{name:'西八王子',ruby:'にしはちおうじ',num:'JC23',ms:null},
+      {name:'八王子',  ruby:'はちおうじ',    num:'JC22',ms:'key'},{name:'豊田',    ruby:'とよだ',        num:'JC21',ms:null},
+      {name:'日野',    ruby:'ひの',          num:'JC20',ms:null},{name:'立川',    ruby:'たちかわ',      num:'JC19',ms:'key'},
+      {name:'国立',    ruby:'くにたち',      num:'JC18',ms:null},{name:'西国分寺',ruby:'にしこくぶんじ',num:'JC17',ms:null},
+      {name:'国分寺',  ruby:'こくぶんじ',    num:'JC16',ms:'key'},{name:'武蔵小金井',ruby:'むさしこがねい',num:'JC15',ms:null},
+      {name:'東小金井',ruby:'ひがしこがねい',num:'JC14',ms:null},{name:'武蔵境',  ruby:'むさしさかい',  num:'JC13',ms:null},
+      {name:'三鷹',    ruby:'みたか',        num:'JC12',ms:'key'},{name:'吉祥寺',  ruby:'きちじょうじ',  num:'JC11',ms:'key'},
+      {name:'西荻窪',  ruby:'にしおぎくぼ',  num:'JC10',ms:null},{name:'荻窪',    ruby:'おぎくぼ',      num:'JC09',ms:null},
+      {name:'阿佐ケ谷',ruby:'あさがや',      num:'JC08',ms:null},{name:'高円寺',  ruby:'こうえんじ',    num:'JC07',ms:null},
+      {name:'中野',    ruby:'なかの',        num:'JC06',ms:'key'},{name:'新宿',    ruby:'しんじゅく',    num:'JC05',ms:'key'},
+      {name:'四ツ谷',  ruby:'よつや',        num:'JC04',ms:null},{name:'御茶ノ水',ruby:'おちゃのみず',  num:'JC03',ms:'key'},
+      {name:'神田',    ruby:'かんだ',        num:'JC02',ms:null},{name:'東京',    ruby:'とうきょう',    num:'JC01',ms:'key'},
+    ]
+  },
+  {
+    badge:'JR 中央本線 特急あずさ', title:'🚆 松本 → 新宿 あそびタイマー',
+    sub:'あずさが新宿についたら あそびおわり', icon:'🚆', from:'松本', to:'新宿',
+    endIcon:'🏙️', endTitle:'🚆 新宿に到着！', whistle:'shinkansen',
+    stations:[
+      {name:'松本',    ruby:'まつもと',      num:'AZ01',ms:'key'},{name:'塩尻',    ruby:'しおじり',      num:'AZ02',ms:null},
+      {name:'岡谷',    ruby:'おかや',        num:'AZ03',ms:null},{name:'上諏訪',  ruby:'かみすわ',      num:'AZ04',ms:'key'},
+      {name:'茅野',    ruby:'ちの',          num:'AZ05',ms:null},{name:'小淵沢',  ruby:'こぶちざわ',    num:'AZ06',ms:null},
+      {name:'韮崎',    ruby:'にらさき',      num:'AZ07',ms:null},{name:'甲府',    ruby:'こうふ',        num:'AZ08',ms:'key'},
+      {name:'山梨市',  ruby:'やまなしし',    num:'AZ09',ms:null},{name:'塩山',    ruby:'えんざん',      num:'AZ10',ms:null},
+      {name:'大月',    ruby:'おおつき',      num:'AZ11',ms:'key'},{name:'八王子',  ruby:'はちおうじ',    num:'AZ12',ms:'key'},
+      {name:'立川',    ruby:'たちかわ',      num:'AZ13',ms:'key'},{name:'三鷹',    ruby:'みたか',        num:'AZ14',ms:null},
+      {name:'新宿',    ruby:'しんじゅく',    num:'AZ15',ms:'key'},
+    ]
   }
 ];
 
@@ -282,6 +320,7 @@ let running = false;
 let lastStIdx = -1;
 let thresholds = [];    // thresholds[i] = remainMs when station i becomes current
 let announceOn = true;
+let isFresh = true;      // まだ一度も発車していない
 let toastTimer = null;
 
 // ============================================================
@@ -381,7 +420,10 @@ function unlockAll() {
 function selectRoute(idx) {
   routeIdx = idx;
   document.querySelectorAll('.route-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
-  document.body.classList.toggle('shinkansen', idx===1);
+  document.body.classList.remove('shinkansen','chuo','azusa');
+  if (idx===1) document.body.classList.add('shinkansen');
+  else if (idx===2) document.body.classList.add('chuo');
+  else if (idx===3) document.body.classList.add('azusa');
   const r = ROUTES[idx];
   document.getElementById('lineBadge').textContent   = r.badge;
   document.getElementById('headerTitle').textContent = r.title;
@@ -479,6 +521,17 @@ function handleStart() {
     startTime = Date.now() - (totalMs - remainMs);
     document.getElementById('startBtn').textContent = '⏸ ていし';
     playWhistle();
+    // 出発時アナウンス（最初の駅を発車）
+    if (isFresh) {
+      isFresh = false;
+      const st0 = STATIONS[0], st1 = STATIONS[1];
+      showToast(ROUTES[routeIdx].icon + ' ' + st0.name + 'を発車');
+      if (announceOn && st1) {
+        setTimeout(function(){
+          speakText(st0.name + 'を発車しました。次は' + st1.name + 'です。');
+        }, 900);
+      }
+    }
     timerInterval = setInterval(tick, 33); // ~30fps、iOSでも安定
   }
 }
@@ -570,8 +623,15 @@ function finish() {
   const r = ROUTES[routeIdx];
   document.getElementById('overlayIcon').textContent  = r.endIcon;
   document.getElementById('overlayTitle').textContent = r.endTitle;
-  document.getElementById('overlayMsg').innerHTML     = 'あそびの時間はおわりです。<br>後片付けしようね！';
+  const tripMin = Math.round(totalMs / 60000);
+  document.getElementById('overlayMsg').innerHTML =
+    'こんかいの旅は <b>' + tripMin + 'ふん</b> でした。<br>あそびの時間はおわりです。<br>後片付けしようね！';
   document.getElementById('overlay').classList.add('show');
+  if (announceOn) {
+    setTimeout(function(){
+      speakText('こんかいの旅は、' + tripMin + 'ふんでした。');
+    }, 3500);
+  }
 }
 
 function closeOverlay() {
@@ -582,7 +642,7 @@ function closeOverlay() {
 function handleReset() {
   clearInterval(timerInterval);
   running = false; timerInterval = null; startTime = null;
-  lastStIdx = -1;
+  lastStIdx = -1; isFresh = true;
   // デフォルトに戻す
   document.getElementById('timeSlider').value = 0;
   applySlider(0);
@@ -597,7 +657,7 @@ function handleReset() {
 function resetState() {
   clearInterval(timerInterval);
   running = false; timerInterval = null; startTime = null;
-  remainMs = 0; lastStIdx = -1; thresholds = [];
+  remainMs = 0; lastStIdx = -1; thresholds = []; isFresh = true;
   document.getElementById('alertOrange').classList.remove('show');
   document.getElementById('alertRed').classList.remove('show');
   document.getElementById('stationsScroll').scrollTop = 0;
