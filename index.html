@@ -179,10 +179,9 @@ input[type=range]::-webkit-slider-thumb {
       <span>⏱ じかんをえらぼう</span>
       <span class="slider-value" id="sliderValue">5ふん</span>
     </div>
-    <input type="range" id="timeSlider" min="1" max="16" step="1" value="1" oninput="onSlider(this.value)">
-    <div class="tick-row">
-      <span class="tick">5</span><span class="tick">15</span><span class="tick">30</span>
-      <span class="tick">45</span><span class="tick">60</span><span class="tick">75</span><span class="tick">80分</span>
+    <input type="range" id="timeSlider" min="0" max="15" step="1" value="0" oninput="onSlider(this.value)">
+    <div class="tick-row" style="justify-content:space-between; padding: 0 16px;">
+      <span class="tick">5分</span><span class="tick">80分</span>
     </div>
   </div>
   <div class="btn-row">
@@ -440,7 +439,7 @@ function onSlider(val) {
 }
 
 function applySlider(val) {
-  const min = STEPS[val - 1];
+  const min = STEPS[val];
   document.getElementById('sliderValue').textContent = min + 'ふん';
   totalMs = min * 60000;
   remainMs = totalMs;
@@ -585,8 +584,8 @@ function handleReset() {
   running = false; timerInterval = null; startTime = null;
   lastStIdx = -1;
   // デフォルトに戻す
-  document.getElementById('timeSlider').value = 1;
-  applySlider(1);
+  document.getElementById('timeSlider').value = 0;
+  applySlider(0);
   setAnnounce(true);
   document.getElementById('startBtn').textContent = ROUTES[routeIdx].icon + ' しゅっぱつ！';
   document.getElementById('alertOrange').classList.remove('show');
