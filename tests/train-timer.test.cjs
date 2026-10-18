@@ -52,6 +52,7 @@ function makeApp() {
     return elements.get(id);
   };
   const buttons = Array.from({length: 6}, () => new FakeElement());
+  const mediaElements = [], audioBlobs = [];
   let clock = 1_700_000_000_000;
   let nextTimerId = 1;
   const timers = new Map();
@@ -59,11 +60,27 @@ function makeApp() {
   const document = {
     body: new FakeElement(),
     getElementById: el,
-    createElement: () => new FakeElement(),
+    createElement(tag) {
+      if (tag !== 'audio') return new FakeElement();
+      const a = new FakeElement();
+      a.paused = true;
+      a.playCount = 0;
+      a.pauseCount = 0;
+      a.play = () => { a.paused = false; a.playCount++; return Promise.resolve(); };
+      a.pause = () => { a.paused = true; a.pauseCount++; };
+      mediaElements.push(a);
+      return a;
+    },
     querySelectorAll: selector => selector === '.route-btn' ? buttons : []
   };
   const ctx = vm.createContext({
-    window: {}, document, Date: Clock, console,
+    window: {}, document, Date: Clock, console, Blob,
+    URL: {
+      createObjectURL(blob) {
+        audioBlobs.push(blob);
+        return 'blob:mock/' + audioBlobs.length;
+      }
+    },
     setInterval(fn, ms) { const id = nextTimerId++; timers.set(id, fn); return id; },
     clearInterval(id) { timers.delete(id); },
     setTimeout(fn, ms) { const id = nextTimerId++; timers.set(id, fn); return id; },
@@ -71,7 +88,7 @@ function makeApp() {
   });
   vm.runInContext(appCode, ctx, {timeout: 5000});
   const run = code => vm.runInContext(code, ctx, {timeout: 5000});
-  return {run, el, advance: ms => { clock += ms; }, buttons};
+  return {run, el, advance: ms => { clock += ms; }, buttons, mediaElements, audioBlobs};
 }
 
 test('six existing and new routes have the expected Tokyo-origin destinations', () => {
@@ -139,4 +156,66 @@ test('pause, resume, sound toggles, and reset preserve user preferences', () => 
   run('handleMusic()');
   assert.equal(run('musicOn'),true);
   assert.equal(el('musicBtn').attributes['aria-pressed'], 'true');
+});
+
+
+test('generated BGM is a genuinely audible PCM WAV playable via normal HTML audio', async () => {
+  const {run,el,mediaElements,audioBlobs} = makeApp();
+  assert.equal(audioBlobs.length, 0, 'audio is prepared lazily for iPhone');
+  run('testMusic()');
+  assert.equal(mediaElements.length, 1, 'created exactly one HTML audio element');
+  assert.equal(mediaElements[0].playCount, 1, 'direct tap starts a media element');
+  assert.equal(mediaElements[0].loop, true);
+  assert.equal(mediaElements[0].paused, false);
+  assert.equal(audioBlobs.length, 1);
+  assert.equal(audioBlobs[0].type,'audio/wav');
+  assert.ok(el('testMusicBtn').textContent.includes('とめる'));
+
+  const dv = new DataView(await audioBlobs[0].arrayBuffer());
+  const ascii = (at,n) => String.fromCharCode(...Array.from({length:n},(_,i)=>dv.getUint8(at+i)));
+  assert.equal(ascii(0,4),'RIFF');
+  assert.equal(ascii(8,4),'WAVE');
+  assert.equal(ascii(36,4),'data');
+  assert.equal(dv.getUint16(20,true),1, 'uncompressed PCM');
+  assert.equal(dv.getUint16(22,true),1, 'mono');
+  assert.equal(dv.getUint32(24,true),22050);
+  assert.ok(dv.byteLength > 350000, 'several seconds of audio');
+  let sq=0, max=0, count=0;
+  for (let p=44;p<dv.byteLength;p+=32) {
+    const amplitude=dv.getInt16(p,true)/32768;
+    sq+=amplitude*amplitude;
+    max=Math.max(max,Math.abs(amplitude));
+    count++;
+  }
+  const rms=Math.sqrt(sq/count);
+  assert.ok(rms > 0.065, 'RMS sound level is meaningfully audible: ' + rms);
+  assert.ok(max > 0.18, 'sound peaks are not near silent: ' + max);
+  await Promise.resolve();
+  assert.ok(el('musicStatus').textContent.includes('再生中'));
+
+  run('testMusic()'); // stop preview
+  assert.equal(mediaElements[0].paused,true);
+  run('testMusic()'); // restart without regenerating large WAV file
+  assert.equal(mediaElements[0].playCount,2);
+  assert.equal(audioBlobs.length,1);
+});
+
+test('BGM starts, stops and resumes alongside timer, even after a silent-mode opt-out', () => {
+  const {run,mediaElements} = makeApp();
+  run('handleMusic()'); // BGM off
+  run('handleStart()');
+  assert.equal(mediaElements.length,0);
+  run('handleMusic()'); // turn BGM on while timer runs
+  assert.equal(mediaElements.length,1);
+  assert.equal(mediaElements[0].playCount,1);
+  run('duckMusic(true)');
+  assert.equal(mediaElements[0].volume, 0.32);
+  run('duckMusic(false)');
+  assert.equal(mediaElements[0].volume, 0.75);
+  run('handleStart()'); // pause
+  assert.equal(mediaElements[0].paused,true);
+  run('handleStart()'); // resume
+  assert.equal(mediaElements[0].playCount,2);
+  run('selectRoute(5)'); // route switch cancels sound
+  assert.equal(mediaElements[0].paused,true);
 });
