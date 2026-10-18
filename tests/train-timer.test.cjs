@@ -219,3 +219,61 @@ test('BGM starts, stops and resumes alongside timer, even after a silent-mode op
   run('selectRoute(5)'); // route switch cancels sound
   assert.equal(mediaElements[0].paused,true);
 });
+
+
+test('three-stage racing soundtrack accelerates at exactly 50% and 20% remaining', () => {
+  const {run,el,advance,mediaElements,audioBlobs} = makeApp();
+  run('selectRoute(5)'); // 北陸新幹線、5分
+  run('handleStart()');
+  assert.equal(mediaElements.length,1);
+  const audio=mediaElements[0];
+  assert.equal(audio.playbackRate,1.12);
+  assert.ok(el('musicPace').textContent.includes('125 BPM'));
+  assert.equal(el('musicPace').attributes['data-phase'],'0');
+  assert.equal(audio.playCount,1);
+  const src=audio.src;
+
+  advance(149999); run('tick()');
+  assert.equal(audio.playbackRate,1.12,'must not speed up before halfway');
+  advance(1); run('tick()');
+  assert.equal(audio.playbackRate,1.34,'accelerates immediately at 50%');
+  assert.ok(el('musicPace').textContent.includes('150 BPM'));
+  assert.equal(el('musicPace').attributes['data-phase'],'1');
+  assert.equal(audio.src,src,'no source swapping');
+  assert.equal(audio.playCount,1,'phase change must not invoke another play');
+
+  advance(89999); run('tick()');
+  assert.equal(audio.playbackRate,1.34,'second stage lasts through >20%');
+  advance(1); run('tick()');
+  assert.equal(audio.playbackRate,1.65,'final sprint at <=20%');
+  assert.ok(el('musicPace').textContent.includes('185 BPM'));
+  assert.equal(el('musicPace').attributes['data-phase'],'2');
+  assert.equal(audio.playCount,1,'no iPhone autoplay issues on phase switching');
+  assert.equal(audioBlobs.length,1,'all stages use same generated WAV');
+
+  run('handleStart()'); // pause
+  assert.equal(audio.paused,true);
+  run('handleStart()'); // resume
+  assert.equal(audio.playbackRate,1.65,'resume keeps final tempo');
+  assert.equal(audio.playCount,2);
+  run('handleReset()');
+  assert.equal(audio.paused,true);
+  assert.equal(audio.playbackRate,1.12,'reset goes back to beginning tempo');
+  assert.equal(el('musicPace').textContent,'🎵 出発準備中');
+  assert.equal(el('musicPace').attributes['data-phase'],'0');
+});
+
+test('new racing song is different from the old sparse melody and previews at normal tempo', () => {
+  const {run,el,mediaElements,audioBlobs} = makeApp();
+  const m=Array.from(run('MUSIC_MELODY'));
+  assert.equal(m.length,32);
+  assert.ok(m.every(f=>f>0),'fast eighth-note melody never leaves a beat empty');
+  assert.ok(m.includes(1318.51),'includes soaring lead notes');
+  assert.equal(Number(run('MUSIC_RATES[2]')),1.65);
+  run('testMusic()');
+  assert.equal(mediaElements[0].playbackRate,1.12);
+  assert.equal(audioBlobs.length,1);
+  assert.ok(el('testMusicBtn').textContent.includes('とめる'));
+  run('testMusic()');
+  assert.equal(mediaElements[0].paused,true);
+});
