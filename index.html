@@ -587,6 +587,7 @@ function speakText(text) {
       const ja = voices.filter(v => /^ja([-_]|$)/i.test(v.lang));
       const cheerful = ja.find(v => /kyoko|nanami|hikari|haruka|sayaka|mizuki|female|女性/i.test(v.name));
       const chosen = cheerful || ja.find(v => v.default) || ja[0];
+      // 音声が端末側で未取得なら ja-JP の標準音声を利用する
       if (chosen) u.voice = chosen;
     }
     u.onstart = () => { if (token === speechSeq) duckMusic(true); };
@@ -759,7 +760,7 @@ function onStationReached(idx) {
   const st = STATIONS[idx];
   const next = STATIONS[idx+1];
   const isLast = idx === N-1;
-  showToast(ROUTES[routeIdx].icon + ' ' + st.name + 'を発車');
+  showToast(ROUTES[routeIdx].icon + ' ' + st.name + (isLast ? 'に到着！' : 'を発車'));
   if (announceOn) {
     const txt = isLast
       ? 'まもなく終点、' + st.name + '。' + st.name + 'です。あそびじかん、しゅうりょうです。'
@@ -785,7 +786,8 @@ function renderDisplay() {
   pb.style.background = col;
   td.style.color = pct > 0.5 ? 'var(--text)' : col;
 
-  const stIdx = Math.min(N-1, Math.floor((1-pct)*N));
+  // アナウンス閾値と表示の駅切替を一致させ、到着前に終点表示しない
+  const stIdx = Math.min(N-1, Math.floor((1-pct)*(N-1) + 1e-9));
   document.getElementById('passedCount').textContent = stIdx + '駅通過';
   document.getElementById('remainCount').textContent = '残り' + (N-stIdx-1) + '駅';
   document.getElementById('currentStation').textContent = '📍 ' + STATIONS[stIdx].name;
@@ -857,6 +859,7 @@ function handleReset() {
   document.getElementById('alertRed').classList.remove('show');
   document.getElementById('stationsScroll').scrollTop = 0;
   resetListDOM();
+  refreshStationTimes();
 }
 
 function resetState() {
