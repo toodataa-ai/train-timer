@@ -1,0 +1,16 @@
+name: Train timer regression tests
+on:
+  push:
+    branches: [main, feature/cheerful-audio-tohoku-hokuriku-20261018]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check app syntax and timer behaviour
+        run: node --test tests/train-timer.test.cjs
