@@ -106,6 +106,9 @@ input[type=range]::-webkit-slider-thumb {
 }
 .time-ms { font-size: 1em; opacity: 0.75; }
 .time-label { font-size: 11px; color: var(--dim); letter-spacing: 2px; }
+.music-pace { font-size: 12px; font-weight: 800; color: var(--accent); border: 1px solid var(--border); padding: 6px 12px; border-radius: 30px; text-align: center; transition: color .2s, border-color .2s; }
+.music-pace[data-phase="1"] { color: var(--orange); border-color: var(--orange); }
+.music-pace[data-phase="2"] { color: #ff5270; border-color: #ff5270; animation: pulse 0.65s infinite alternate; }
 
 .progress-wrap { width: 100%; display: flex; flex-direction: column; gap: 5px; }
 .progress-bar-bg { height: 14px; background: #1a1e2e; border-radius: 7px; overflow: hidden; border: 1px solid var(--border); }
@@ -218,13 +221,14 @@ input[type=range]::-webkit-slider-thumb {
   <button type="button" class="btn-audio-test" id="testMusicBtn" onclick="testMusic()">🎧 音楽をためす（5秒）</button>
   <span id="musicStatus" role="status" aria-live="polite">BGM：準備OK</span>
 </div>
-<div class="audio-hint">🎶 出発すると音楽が流れます。音が出ない場合は「音楽をためす」を押してみてね。</div>
+<div class="audio-hint">🎶 新しい疾走BGM！ 後半から速く、ラスト20%はさらに加速。音楽試聴もできます。</div>
 
 <div class="toast" id="toast"></div>
 
 <div class="time-panel">
   <div class="time-main" id="timeDisplay">05:00<span class="time-ms">.00</span></div>
   <div class="time-label">のこり じかん</div>
+  <div class="music-pace" id="musicPace" data-phase="0">🎵 出発準備中</div>
   <div class="progress-wrap">
     <div class="progress-label"><span id="labelFrom">三鷹</span><span id="labelTo">千葉</span></div>
     <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
@@ -460,12 +464,20 @@ function playWhistle() {
 // iPhoneの消音設定で無音になりやすい Web Audio オシレーターではなく、
 // 通常の <audio> 要素から再生する PCM WAV 音源に変更（外部通信不要）。
 // ============================================================
-const MUSIC_STEP_SECONDS = 60 / 112 / 2; // 明るい112 BPM、8分音符
+const MUSIC_STEP_SECONDS = 60 / 112 / 2; // 112 BPM 基準：再生倍率で125/150/185 BPMに加速
+const MUSIC_RATES = [1.12, 1.34, 1.65];
+const MUSIC_PHASE_LABELS = [
+  '🎵 ワクワク出発！ 約125 BPM',
+  '⚡ 後半、スピードアップ！ 約150 BPM',
+  '🔥 ラストスパート！ 約185 BPM'
+];
+// 「列車が疾走する」イメージの新しいオリジナルメロディー。高音の
+// 8分音符を連続させ、ベース・キック・スネア・ハイハットを重ねる。
 const MUSIC_MELODY = [
-  659.25,0,783.99,0,880,783.99,659.25,523.25,
-  587.33,0,783.99,0,659.25,587.33,523.25,0,
-  659.25,0,880,0,987.77,880,783.99,659.25,
-  698.46,783.99,880,0,783.99,659.25,523.25,0
+  659.25,783.99,880,1046.50,987.77,880,783.99,659.25,
+  783.99,987.77,1174.66,987.77,880,783.99,587.33,783.99,
+  880,1046.50,1318.51,1046.50,987.77,880,783.99,659.25,
+  880,1046.50,1174.66,1046.50,880,783.99,659.25,1046.50
 ];
 const MUSIC_CHORDS = [
   [261.63,329.63,392], [196,246.94,392],
@@ -473,6 +485,7 @@ const MUSIC_CHORDS = [
 ];
 const MUSIC_BASS = [130.81,98,110,87.31];
 let musicAudio = null, musicOn = true, musicPreviewing = false, musicPreviewTimer = null;
+let currentMusicPhase = -1;
 let musicRequestId = 0;
 function setMusicStatus(message) {
   const el = document.getElementById('musicStatus');
@@ -495,36 +508,51 @@ function makeMusicWave() {
   v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
   str(36, 'data'); v.setUint32(40, frameCount * 2, true);
   const tau = Math.PI * 2;
-  const sin = (f, t) => Math.sin(tau * f * t);
+  const sin = (f,t) => Math.sin(tau * f * t);
   for (let i = 0; i < frameCount; i++) {
-    const t = i / rate;
-    const step = Math.min(31, Math.floor(t / MUSIC_STEP_SECONDS));
+    const t = i / rate, step = Math.min(31, Math.floor(t / MUSIC_STEP_SECONDS));
     const inStep = t - step * MUSIC_STEP_SECONDS;
     const chordIndex = Math.floor(step / 8);
-    const inChord = (step % 8) * MUSIC_STEP_SECONDS + inStep;
-    const note = MUSIC_MELODY[step];
-    // ベル風のリード：軽く弾むアタック、3倍音まで重ねる
-    const leadEnv = Math.min(1, inStep / 0.018) *
-      Math.max(0, Math.min(1, (MUSIC_STEP_SECONDS * 0.88 - inStep) / 0.07));
-    const melody = note ? 0.27 * leadEnv *
-      (0.73 * sin(note, inStep) + 0.20 * sin(note * 2, inStep) +
-       0.07 * sin(note * 3, inStep)) : 0;
-    // やわらかい和音と低音で、単音の電子音だけにならないようにする
-    const padEnv = Math.min(1, inChord / 0.06) *
-      Math.max(0, Math.min(1, (8 * MUSIC_STEP_SECONDS - inChord) / 0.09));
-    const pad = MUSIC_CHORDS[chordIndex].reduce((sum,f) => sum + sin(f,t),0) *
-      0.029 * padEnv;
-    const bassStep = step % 4;
-    const bassElapsed = bassStep * MUSIC_STEP_SECONDS + inStep;
-    const bass = (bassStep < 2) ? 0.105 * sin(MUSIC_BASS[chordIndex],t) *
-      Math.min(1, bassElapsed / 0.014) * Math.exp(-bassElapsed * 4) : 0;
-    // 小さなリズム音（音量は控えめ）
-    const rhythm = (step % 2 === 1) ? 0.025 * Math.sin(tau * 6900 * t) *
-      Math.sin(tau * 9220 * t) * Math.exp(-inStep * 48) : 0;
-    const edgeFade = Math.min(1, t / 0.023, (duration - t) / 0.023);
-    const amplitude = Math.tanh((melody + pad + bass + rhythm) * 1.2) *
-      Math.max(0,edgeFade);
-    v.setInt16(44 + i * 2, Math.round(Math.max(-1,Math.min(1,amplitude)) * 32767), true);
+    const chordT = (step % 8) * MUSIC_STEP_SECONDS + inStep;
+    const melodyFreq = MUSIC_MELODY[step];
+
+    // 走り続ける8分音符：粒立ちのよいゲーム音楽風シンセリード
+    const leadEnvelope = Math.min(1, inStep / 0.006) *
+      Math.max(0,Math.min(1,(MUSIC_STEP_SECONDS - 0.012 - inStep) / 0.040));
+    const lead = 0.31 * leadEnvelope * (
+      0.66 * sin(melodyFreq, inStep) +
+      0.22 * sin(melodyFreq * 2, inStep) +
+      0.12 * sin(melodyFreq * 3, inStep));
+
+    // シンセアルペジオ：コードの分散和音がリズムを後押し
+    const chord = MUSIC_CHORDS[chordIndex];
+    const arpeggio = 0.065 * Math.sin(tau * chord[(step + 1) % 3] * 2 * t) *
+      Math.min(1,inStep / 0.012) * Math.exp(-inStep * 5);
+    const padFade = Math.min(1,chordT / 0.045) *
+      Math.max(0,Math.min(1,(8 * MUSIC_STEP_SECONDS - chordT) / 0.04));
+    const pad = chord.reduce((sum,f) => sum + sin(f,t),0) * 0.021 * padFade;
+
+    // ベースは2拍子のノリに合わせて鳴らす。各拍の「ドン」が列車らしさを作る。
+    const beatT = (step % 2) * MUSIC_STEP_SECONDS + inStep;
+    const bass = 0.16 * (0.82 * sin(MUSIC_BASS[chordIndex],t) +
+      0.18 * sin(MUSIC_BASS[chordIndex]*2,t)) *
+      Math.min(1,beatT / 0.009) * Math.exp(-beatT * 3.6);
+
+    // キック（低音域のピッチダウン）、スネア（ノイズ状倍音）、刻むハイハット
+    const kick = step % 2 === 0
+      ? 0.19 * sin(48 + 125 * Math.exp(-inStep*42), inStep) *
+        Math.exp(-inStep*23) : 0;
+    const snare = step % 4 === 2 ? 0.11 *
+      (Math.sin(tau*3250*t) * Math.sin(tau*7013*t) +
+       0.30 * sin(190,t)) * Math.exp(-inStep*26) : 0;
+    const hat = 0.050 *
+      Math.sin(tau * 6900 * t) * Math.sin(tau * 9277 * t) *
+      Math.exp(-inStep * (step % 2 ? 44 : 66));
+
+    // ループの境界でクリック音を出さない
+    const edgeFade = Math.max(0,Math.min(1,t / 0.014,(duration-t) / 0.014));
+    const sample = Math.tanh((lead+arpeggio+pad+bass+kick+snare+hat)*1.05)*edgeFade;
+    v.setInt16(44 + i*2,Math.round(Math.max(-1,Math.min(1,sample))*32767),true);
   }
   return new Blob([buffer], {type:'audio/wav'});
 }
@@ -546,10 +574,33 @@ function getMusicAudio() {
     return null;
   }
 }
+// タイマーの実残時間からフェーズを決め、iPhoneの同じ <audio> を
+// playbackRate だけ変えて再生する。音声のsrc交換・再生し直しはしない。
+function getMusicPhase() {
+  if (totalMs <= 0) return 0;
+  const fraction = remainMs / totalMs;
+  return fraction <= 0.2 ? 2 : fraction <= 0.5 ? 1 : 0;
+}
+function updateMusicPhase() {
+  const phase = getMusicPhase();
+  if (phase === currentMusicPhase) return;
+  currentMusicPhase = phase;
+  if (musicAudio) {
+    try { musicAudio.playbackRate = MUSIC_RATES[phase]; } catch(e) {}
+  }
+  const pace = document.getElementById('musicPace');
+  if (pace) {
+    pace.textContent = MUSIC_PHASE_LABELS[phase];
+    pace.setAttribute('data-phase', String(phase));
+  }
+}
 function startMusic() {
   if (!musicOn || (!running && !musicPreviewing)) return;
   const a = getMusicAudio();
   if (!a) return;
+  currentMusicPhase = -1;
+  if (running) updateMusicPhase();
+  else { a.playbackRate = MUSIC_RATES[0]; }
   const requestId = ++musicRequestId;
   a.volume = 0.75;
   // Safariではplay()をユーザー操作から直接呼ぶことが必要
@@ -573,11 +624,12 @@ function startMusic() {
 }
 function stopMusic() {
   musicRequestId++;
+  currentMusicPhase = -1;
   if (musicPreviewTimer) clearTimeout(musicPreviewTimer);
   musicPreviewTimer = null;
   musicPreviewing = false;
   if (musicAudio) {
-    try { musicAudio.pause(); musicAudio.currentTime = 0; } catch(e) {}
+    try { musicAudio.pause(); musicAudio.currentTime = 0; musicAudio.playbackRate = MUSIC_RATES[0]; } catch(e) {}
   }
   setMusicStatus('BGM：準備OK');
   const btn = document.getElementById('testMusicBtn');
@@ -762,6 +814,9 @@ function applySlider(val) {
   computeThresholds();
   refreshStationTimes();
   renderDisplay();
+  // 新たに選んだ時間はいつでも序盤からスタート
+  const pace = document.getElementById('musicPace');
+  if (pace && !running) { pace.textContent = '🎵 出発準備中'; pace.setAttribute('data-phase', '0'); }
 }
 
 function computeThresholds() {
@@ -795,6 +850,7 @@ function handleStart() {
     // 5秒試聴の終了タイマーが本番再生を途中で止めないようにする
     if (musicPreviewing) stopMusic();
     running = true;
+    updateMusicPhase();
     // startTime = 「今この瞬間にremainMsだけ残っている」基準点
     startTime = Date.now() - (totalMs - remainMs);
     document.getElementById('startBtn').textContent = '⏸ ていし';
@@ -828,6 +884,7 @@ function tick() {
     }
   }
 
+  updateMusicPhase();
   renderDisplay();
   if (remainMs <= 0) { finish(); }
 }
