@@ -792,6 +792,8 @@ function handleStart() {
     document.getElementById('startBtn').textContent = '▶ さいかい';
   } else {
     if (!totalMs) return;
+    // 5秒試聴の終了タイマーが本番再生を途中で止めないようにする
+    if (musicPreviewing) stopMusic();
     running = true;
     // startTime = 「今この瞬間にremainMsだけ残っている」基準点
     startTime = Date.now() - (totalMs - remainMs);
