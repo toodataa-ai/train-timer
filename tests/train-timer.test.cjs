@@ -39,6 +39,8 @@ class FakeElement {
     this.hidden = false;
     this.children = [];
   }
+  get innerHTML() { return this._html || ''; }
+  set innerHTML(value) { this._html = value; if (value === '') this.children = []; }
   setAttribute(key, value) { this.attributes[key] = value; }
   appendChild(el) { this.children.push(el); }
   scrollIntoView() {}
