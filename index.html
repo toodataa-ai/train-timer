@@ -75,7 +75,11 @@ input[type=range]::-webkit-slider-thumb {
 
 .announce-row { width: 100%; max-width: 560px; margin-bottom: 10px; }
 .sound-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.audio-hint { width: 100%; max-width: 560px; margin: -3px 0 10px; color: #858da7; font-size: 11px; text-align: center; }
+.audio-hint { width: 100%; max-width: 560px; margin: -4px 0 10px; color: #858da7; font-size: 11px; text-align: center; }
+.audio-test-row { width: 100%; max-width: 560px; display: flex; align-items: center; gap: 10px; margin: -3px 0 11px; }
+.btn-audio-test { flex-shrink: 0; background: var(--panel); color: var(--accent); border: 1px solid var(--accent); border-radius: 9px; padding: 9px 10px; font-size: 12px; font-weight: 750; cursor: pointer; -webkit-appearance: none; }
+#musicStatus { min-width: 0; color: #a7aec4; font-size: 11px; line-height: 1.35; }
+
 .route-note { width: 100%; max-width: 560px; margin: -7px 0 12px; color: #858da7; font-size: 11px; text-align: center; }
 .btn-announce {
   width: 100%; padding: 12px; border-radius: 10px;
@@ -210,7 +214,11 @@ input[type=range]::-webkit-slider-thumb {
     <span class="dot"></span>🎵 BGM：オン
   </button>
 </div>
-<div class="audio-hint">🎶 音楽は「しゅっぱつ！」で流れます。声が流れる間は小さくなります。</div>
+<div class="audio-test-row">
+  <button type="button" class="btn-audio-test" id="testMusicBtn" onclick="testMusic()">🎧 音楽をためす（5秒）</button>
+  <span id="musicStatus" role="status" aria-live="polite">BGM：準備OK</span>
+</div>
+<div class="audio-hint">🎶 出発すると音楽が流れます。音が出ない場合は「音楽をためす」を押してみてね。</div>
 
 <div class="toast" id="toast"></div>
 
@@ -395,7 +403,6 @@ let running = false;
 let lastStIdx = -1;
 let thresholds = [];    // thresholds[i] = remainMs when station i becomes current
 let announceOn = true;
-let musicOn = true;
 let announcementTimers = new Set();
 let speechSeq = 0;
 let isFresh = true;      // まだ一度も発車していない
@@ -449,10 +456,11 @@ function playWhistle() {
 }
 
 // ============================================================
-// BGM — オリジナルの明るいループ（音声ファイル不要／Web Audio）
+// BGM — ブラウザ内で作るオリジナルのメロディー。
+// iPhoneの消音設定で無音になりやすい Web Audio オシレーターではなく、
+// 通常の <audio> 要素から再生する PCM WAV 音源に変更（外部通信不要）。
 // ============================================================
-let musicTimer = null, musicBus = null, musicStep = 0, musicNextTime = 0;
-const MUSIC_STEP_SECONDS = 60 / 112 / 2; // 112 BPM、8分音符
+const MUSIC_STEP_SECONDS = 60 / 112 / 2; // 明るい112 BPM、8分音符
 const MUSIC_MELODY = [
   659.25,0,783.99,0,880,783.99,659.25,523.25,
   587.33,0,783.99,0,659.25,587.33,523.25,0,
@@ -460,79 +468,127 @@ const MUSIC_MELODY = [
   698.46,783.99,880,0,783.99,659.25,523.25,0
 ];
 const MUSIC_CHORDS = [
-  [261.63,329.63,392], // C
-  [196,246.94,392],    // G
-  [220,261.63,329.63], // Am
-  [174.61,220,349.23]  // F
+  [261.63,329.63,392], [196,246.94,392],
+  [220,261.63,329.63], [174.61,220,349.23]
 ];
 const MUSIC_BASS = [130.81,98,110,87.31];
-function musicTone(freq, at, duration, type, volume) {
-  const c = getActx();
-  if (!c || !musicBus || !freq) return;
-  try {
-    const oscillator = c.createOscillator(), gain = c.createGain();
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(freq, at);
-    const attack = Math.min(0.025, duration / 4);
-    gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.linearRampToValueAtTime(volume, at + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
-    oscillator.connect(gain); gain.connect(musicBus);
-    oscillator.start(at); oscillator.stop(at + duration + 0.03);
-    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
-  } catch (e) {}
+let musicAudio = null, musicOn = true, musicPreviewing = false, musicPreviewTimer = null;
+let musicRequestId = 0;
+function setMusicStatus(message) {
+  const el = document.getElementById('musicStatus');
+  if (el) el.textContent = message;
 }
-function scheduleMusic() {
-  const c = getActx();
-  if (!c || !musicBus || !running || !musicOn) return;
-  // スマホのバックグラウンド復帰時、古い音符を一気に再生しない
-  if (musicNextTime < c.currentTime - 0.5) musicNextTime = c.currentTime + 0.04;
-  while (musicNextTime < c.currentTime + 0.30) {
-    const step = musicStep % MUSIC_MELODY.length;
-    const chord = Math.floor(step / 8);
-    musicTone(MUSIC_MELODY[step], musicNextTime, MUSIC_STEP_SECONDS * 0.84, 'triangle', 0.032);
-    if (step % 8 === 0) {
-      MUSIC_CHORDS[chord].forEach(f => musicTone(f, musicNextTime, MUSIC_STEP_SECONDS * 7, 'sine', 0.008));
-    }
-    if (step % 4 === 0) {
-      musicTone(MUSIC_BASS[chord], musicNextTime, MUSIC_STEP_SECONDS * 2.5, 'sine', 0.025);
-    }
-    musicStep++;
-    musicNextTime += MUSIC_STEP_SECONDS;
+function makeMusicWave() {
+  // 8.57秒のループ、22.05kHz/16-bit/mono ≒ 370KB
+  const rate = 22050;
+  const duration = 32 * MUSIC_STEP_SECONDS;
+  const frameCount = Math.round(rate * duration);
+  const buffer = new ArrayBuffer(44 + frameCount * 2);
+  const v = new DataView(buffer);
+  const str = (offset, value) => {
+    for (let i = 0; i < value.length; i++) v.setUint8(offset + i, value.charCodeAt(i));
+  };
+  str(0, 'RIFF'); v.setUint32(4, 36 + frameCount * 2, true);
+  str(8, 'WAVE'); str(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); // PCM
+  v.setUint16(22, 1, true); v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  str(36, 'data'); v.setUint32(40, frameCount * 2, true);
+  const tau = Math.PI * 2;
+  const sin = (f, t) => Math.sin(tau * f * t);
+  for (let i = 0; i < frameCount; i++) {
+    const t = i / rate;
+    const step = Math.min(31, Math.floor(t / MUSIC_STEP_SECONDS));
+    const inStep = t - step * MUSIC_STEP_SECONDS;
+    const chordIndex = Math.floor(step / 8);
+    const inChord = (step % 8) * MUSIC_STEP_SECONDS + inStep;
+    const note = MUSIC_MELODY[step];
+    // ベル風のリード：軽く弾むアタック、3倍音まで重ねる
+    const leadEnv = Math.min(1, inStep / 0.018) *
+      Math.max(0, Math.min(1, (MUSIC_STEP_SECONDS * 0.88 - inStep) / 0.07));
+    const melody = note ? 0.27 * leadEnv *
+      (0.73 * sin(note, inStep) + 0.20 * sin(note * 2, inStep) +
+       0.07 * sin(note * 3, inStep)) : 0;
+    // やわらかい和音と低音で、単音の電子音だけにならないようにする
+    const padEnv = Math.min(1, inChord / 0.06) *
+      Math.max(0, Math.min(1, (8 * MUSIC_STEP_SECONDS - inChord) / 0.09));
+    const pad = MUSIC_CHORDS[chordIndex].reduce((sum,f) => sum + sin(f,t),0) *
+      0.029 * padEnv;
+    const bassStep = step % 4;
+    const bassElapsed = bassStep * MUSIC_STEP_SECONDS + inStep;
+    const bass = (bassStep < 2) ? 0.105 * sin(MUSIC_BASS[chordIndex],t) *
+      Math.min(1, bassElapsed / 0.014) * Math.exp(-bassElapsed * 4) : 0;
+    // 小さなリズム音（音量は控えめ）
+    const rhythm = (step % 2 === 1) ? 0.025 * Math.sin(tau * 6900 * t) *
+      Math.sin(tau * 9220 * t) * Math.exp(-inStep * 48) : 0;
+    const edgeFade = Math.min(1, t / 0.023, (duration - t) / 0.023);
+    const amplitude = Math.tanh((melody + pad + bass + rhythm) * 1.2) *
+      Math.max(0,edgeFade);
+    v.setInt16(44 + i * 2, Math.round(Math.max(-1,Math.min(1,amplitude)) * 32767), true);
+  }
+  return new Blob([buffer], {type:'audio/wav'});
+}
+function getMusicAudio() {
+  if (musicAudio) return musicAudio;
+  try {
+    const src = URL.createObjectURL(makeMusicWave());
+    const audio = document.createElement('audio');
+    audio.src = src;
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.playsInline = true;
+    audio.setAttribute('playsinline','');
+    audio.volume = 0.75; // iOSでは音量がOS管理になることがあります
+    musicAudio = audio;
+    return audio;
+  } catch(e) {
+    setMusicStatus('BGMの準備に失敗しました');
+    return null;
   }
 }
 function startMusic() {
-  if (!musicOn || !running || musicTimer) return;
-  const c = getActx(); if (!c) return;
-  musicBus = c.createGain();
-  musicBus.gain.value = 0.0;
-  musicBus.connect(c.destination);
-  musicBus.gain.setTargetAtTime(0.85, c.currentTime, 0.06);
-  musicStep = 0; musicNextTime = c.currentTime + 0.05;
-  scheduleMusic();
-  musicTimer = setInterval(scheduleMusic, 100);
-}
-function stopMusic() {
-  if (musicTimer) clearInterval(musicTimer);
-  musicTimer = null;
-  if (musicBus) {
-    const oldBus = musicBus;
-    musicBus = null;
-    const c = getActx();
-    if (c) {
-      oldBus.gain.cancelScheduledValues(c.currentTime);
-      oldBus.gain.setTargetAtTime(0.0001, c.currentTime, 0.015);
+  if (!musicOn || (!running && !musicPreviewing)) return;
+  const a = getMusicAudio();
+  if (!a) return;
+  const requestId = ++musicRequestId;
+  a.volume = 0.75;
+  // Safariではplay()をユーザー操作から直接呼ぶことが必要
+  try {
+    const playResult = a.play();
+    setMusicStatus('🎵 BGM再生を開始しています');
+    if (playResult && typeof playResult.then === 'function') {
+      playResult.then(() => {
+        if (requestId === musicRequestId) setMusicStatus('🎵 BGM再生中');
+      }).catch(() => {
+        if (requestId === musicRequestId) {
+          setMusicStatus('音を出せませんでした。もう一度「音楽をためす」をタップ');
+        }
+      });
+    } else {
+      setMusicStatus('🎵 BGM再生中');
     }
-    setTimeout(() => { try { oldBus.disconnect(); } catch(e) {} }, 800);
+  } catch(e) {
+    setMusicStatus('音を出せませんでした。もう一度「音楽をためす」をタップ');
   }
 }
+function stopMusic() {
+  musicRequestId++;
+  if (musicPreviewTimer) clearTimeout(musicPreviewTimer);
+  musicPreviewTimer = null;
+  musicPreviewing = false;
+  if (musicAudio) {
+    try { musicAudio.pause(); musicAudio.currentTime = 0; } catch(e) {}
+  }
+  setMusicStatus('BGM：準備OK');
+  const btn = document.getElementById('testMusicBtn');
+  if (btn) btn.textContent = '🎧 音楽をためす（5秒）';
+}
 function duckMusic(isSpeaking) {
-  if (!musicBus) return;
-  const c = getActx(); if (!c) return;
-  musicBus.gain.setTargetAtTime(isSpeaking ? 0.16 : 0.85, c.currentTime, 0.07);
+  if (!musicAudio || musicAudio.paused) return;
+  // iPhoneではvolume設定が無視される場合があります。その際は端末の音量を使用
+  try { musicAudio.volume = isSpeaking ? 0.32 : 0.75; } catch(e) {}
 }
 function handleMusic() {
-  resumeActx();
   musicOn = !musicOn;
   const btn = document.getElementById('musicBtn');
   btn.classList.toggle('on', musicOn);
@@ -540,6 +596,23 @@ function handleMusic() {
   btn.innerHTML = '<span class="dot"></span>🎵 BGM：' + (musicOn ? 'オン' : 'オフ');
   if (musicOn && running) startMusic();
   else stopMusic();
+}
+function testMusic() {
+  if (musicPreviewing) { stopMusic(); return; }
+  if (running) {
+    setMusicStatus('タイマー再生中です。BGMを確認してね');
+    if (musicOn) startMusic();
+    return;
+  }
+  // BGMオフでも試聴はできる。設定そのものは変更しない
+  musicPreviewing = true;
+  const btn = document.getElementById('testMusicBtn');
+  if (btn) btn.textContent = '⏹ 試聴をとめる';
+  const previous = musicOn;
+  musicOn = true;
+  startMusic(); // この呼び出し自体が直接のタップ操作
+  musicOn = previous;
+  musicPreviewTimer = setTimeout(stopMusic, 5000);
 }
 function queueAnnouncement(callback, delay) {
   const id = setTimeout(() => {
@@ -709,7 +782,7 @@ function refreshStationTimes() {
 // タイマー制御
 // ============================================================
 function handleStart() {
-  unlockAll(); // 必ずユーザー操作タイミングでアンロック
+  // 直接タップした瞬間に<audio>.play()を呼び、iOSの制限を回避
   if (running) {
     // 一時停止
     clearInterval(timerInterval);
@@ -723,8 +796,9 @@ function handleStart() {
     // startTime = 「今この瞬間にremainMsだけ残っている」基準点
     startTime = Date.now() - (totalMs - remainMs);
     document.getElementById('startBtn').textContent = '⏸ ていし';
+    startMusic(); // タップ中に通常の音声プレーヤーを開始
+    unlockAll();
     playWhistle();
-    startMusic();
     // 出発時アナウンス（最初の駅を発車）
     if (isFresh) {
       isFresh = false;
