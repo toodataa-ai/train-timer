@@ -837,7 +837,8 @@ function keepMusicInCurrentTheme() {
   const start = musicStageStart(phase), end = musicStageEnd(phase);
   const t = musicAudio.currentTime;
   if (typeof t !== 'number' || !Number.isFinite(t)) return;
-  if (t >= end - 0.035 || t < start - 0.035) {
+  const edgeMargin = musicUsingBGMer ? 0.30 : 0.035;
+  if (t >= end - edgeMargin || t < start - 0.035) {
     try { musicAudio.currentTime = start; } catch(e) {}
   }
 }
