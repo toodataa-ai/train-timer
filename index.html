@@ -413,6 +413,73 @@ let isFresh = true;      // まだ一度も発車していない
 let toastTimer = null;
 
 // ============================================================
+// 画面の自動ロック防止 — 出発後（停止中も含む）だけ保持
+// ============================================================
+let screenWakeDesired = false;
+let screenWakeLock = null;
+let screenWakeLockRequest = null;
+let screenWakeLockEpoch = 0;
+
+// 非表示への遷移やリセット中にrequestが完了しても、ロックを残さない。
+function releaseScreenWakeLock() {
+  screenWakeLockEpoch++;
+  const lock = screenWakeLock;
+  screenWakeLock = null;
+  if (lock) {
+    try { Promise.resolve(lock.release()).catch(() => {}); } catch(e) {}
+  }
+}
+
+async function acquireScreenWakeLock() {
+  if (!screenWakeDesired || document.visibilityState !== 'visible' ||
+      screenWakeLock || screenWakeLockRequest ||
+      typeof navigator === 'undefined' || !navigator.wakeLock ||
+      typeof navigator.wakeLock.request !== 'function') return;
+
+  const epoch = screenWakeLockEpoch;
+  let request;
+  try {
+    request = Promise.resolve(navigator.wakeLock.request('screen'));
+  } catch(e) {
+    return; // 未対応ブラウザーやシステム拒否でもタイマーは動かす
+  }
+  screenWakeLockRequest = request;
+
+  try {
+    const lock = await request;
+    if (epoch !== screenWakeLockEpoch || !screenWakeDesired ||
+        document.visibilityState !== 'visible') {
+      try { await lock.release(); } catch(e) {}
+      return;
+    }
+    screenWakeLock = lock;
+    lock.addEventListener('release', () => {
+      if (screenWakeLock === lock) screenWakeLock = null;
+    });
+  } catch(e) {
+    // 低電力モード等で拒否されても、既存のタイマー・音声機能に影響させない。
+  } finally {
+    if (screenWakeLockRequest === request) screenWakeLockRequest = null;
+    // 非表示→表示の切替中に古い要求が完了したケースだけ、現在の状態で再要求。
+    if (epoch !== screenWakeLockEpoch && screenWakeDesired &&
+        document.visibilityState === 'visible') acquireScreenWakeLock();
+  }
+}
+
+function setScreenWakeDesired(desired) {
+  screenWakeDesired = desired;
+  if (desired) acquireScreenWakeLock();
+  else releaseScreenWakeLock();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') acquireScreenWakeLock();
+  else releaseScreenWakeLock();
+});
+window.addEventListener('pagehide', releaseScreenWakeLock);
+window.addEventListener('pageshow', acquireScreenWakeLock);
+
+// ============================================================
 // Audio — Web Audio API
 // ============================================================
 let actx = null;
@@ -850,6 +917,7 @@ function handleStart() {
     // 5秒試聴の終了タイマーが本番再生を途中で止めないようにする
     if (musicPreviewing) stopMusic();
     running = true;
+    setScreenWakeDesired(true);
     updateMusicPhase();
     // startTime = 「今この瞬間にremainMsだけ残っている」基準点
     startTime = Date.now() - (totalMs - remainMs);
@@ -957,6 +1025,7 @@ function pad(n) { return String(n).padStart(2,'0'); }
 function finish() {
   clearInterval(timerInterval);
   running = false; timerInterval = null;
+  setScreenWakeDesired(false);
   stopMusic();
   remainMs = 0; renderDisplay();
   const r = ROUTES[routeIdx];
@@ -979,6 +1048,7 @@ function closeOverlay() {
 }
 
 function handleReset() {
+  setScreenWakeDesired(false);
   clearInterval(timerInterval);
   stopMusic();
   clearAnnouncements();
@@ -996,6 +1066,7 @@ function handleReset() {
 }
 
 function resetState() {
+  setScreenWakeDesired(false);
   clearInterval(timerInterval);
   stopMusic();
   clearAnnouncements();
