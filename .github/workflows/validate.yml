@@ -13,4 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check app syntax and timer behaviour
-        run: node --test tests/train-timer.test.cjs
+        run: node --test tests/*.test.cjs
