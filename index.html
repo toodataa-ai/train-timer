@@ -86,6 +86,12 @@ input[type=range]::-webkit-slider-thumb {
 .audio-test-row { width: 100%; max-width: 560px; display: flex; align-items: center; gap: 10px; margin: -3px 0 11px; }
 .btn-audio-test { flex-shrink: 0; background: var(--panel); color: var(--accent); border: 1px solid var(--accent); border-radius: 9px; padding: 9px 10px; font-size: 12px; font-weight: 750; cursor: pointer; -webkit-appearance: none; }
 #musicStatus { min-width: 0; color: #a7aec4; font-size: 11px; line-height: 1.35; }
+.music-credits { width: 100%; max-width: 560px; margin: -2px 0 12px; font-size: 12px; color: #a7aec4; line-height: 1.6; }
+.music-credits summary { cursor: pointer; }
+.music-credits a { color: var(--accent); }
+.music-credits ol { padding-left: 18px; }
+#bgmerAvailability { margin: 8px 0; }
+
 
 .route-note { width: 100%; max-width: 560px; margin: -7px 0 12px; color: #858da7; font-size: 11px; text-align: center; }
 .btn-announce {
@@ -229,7 +235,17 @@ input[type=range]::-webkit-slider-thumb {
   <button type="button" class="btn-audio-test" id="testMusicBtn" onclick="testMusic()">🎧 音楽をためす（5秒）</button>
   <span id="musicStatus" role="status" aria-live="polite">BGM：準備OK</span>
 </div>
-<div class="audio-hint">🎶 前半はのんびりメロディー。半分で別の疾走曲にチェンジ！ 残り20%はさらに加速します。</div>
+<div class="audio-hint">🎶 前半は楽しく、半分で疾走BGM、残り20%でラストスパート！</div>
+<details class="music-credits">
+  <summary>使用BGM・音源の状態</summary>
+  <div id="bgmerAvailability" role="status">フリー音源の準備状況を確認しています…</div>
+  <div>使用予定の楽曲（音楽：<a href="https://bgmer.net/" target="_blank" rel="noopener">BGMer</a>）</div>
+  <ol>
+    <li><a href="https://bgmer.net/music/277/" target="_blank" rel="noopener">並走ハピネス</a>：前半</li>
+    <li><a href="https://bgmer.net/music/251/" target="_blank" rel="noopener">グルーヴコースター</a>：残り50%から</li>
+    <li><a href="https://bgmer.net/music/148/" target="_blank" rel="noopener">爆発寸前！</a>：残り20%から</li>
+  </ol>
+</details>
 <div class="wake-panel" id="wakePanel" hidden>
   <span id="wakeStatus" role="status" aria-live="polite" data-state="idle"></span>
   <button id="wakeRetry" type="button" onclick="retryScreenWakeLock()" hidden>画面ロック防止を再試行</button>
@@ -652,6 +668,59 @@ const MUSIC_CHORDS = [
   [220,261.63,329.63], [174.61,220,349.23]
 ];
 const MUSIC_BASS = [130.81,98,110,87.31];
+// 公式サイトから手動入手したSHORT版3曲をローカルで連結した音源だけを使用。
+// ファイル未設置の場合、既存の自作BGMを維持する（無音・無許可の直リンクは禁止）。
+const BGMER_BUNDLE_MANIFEST = 'assets/music/bgmer-train-timer.json';
+const BGMER_TRACK_TITLES = ['並走ハピネス', 'グルーヴコースター', '爆発寸前！'];
+let bgmerBundle = null;
+let bgmerBundleLoading = false;
+let musicUsingBGMer = false;
+function musicStageStart(phase) {
+  return musicUsingBGMer ? bgmerBundle.tracks[phase].start : MUSIC_PHASE_STARTS[phase];
+}
+function musicStageEnd(phase) {
+  return musicUsingBGMer ? bgmerBundle.tracks[phase].end : MUSIC_PHASE_ENDS[phase];
+}
+function musicStageRate(phase) {
+  return musicUsingBGMer ? 1 : MUSIC_RATES[phase];
+}
+function musicStageLabel(phase) {
+  return musicUsingBGMer
+    ? ['🎵 並走ハピネス（前半）','⚡ グルーヴコースター（後半）','🔥 爆発寸前！（ラスト）'][phase]
+    : MUSIC_PHASE_LABELS[phase];
+}
+function validateBGMerBundle(data) {
+  if (!data || data.version !== 1 || data.file !== 'bgmer-train-timer.m4a' ||
+      !Array.isArray(data.tracks) || data.tracks.length !== 3) return false;
+  return data.tracks.every((track, index) =>
+    track.title === BGMER_TRACK_TITLES[index] &&
+    Number.isFinite(track.start) && Number.isFinite(track.end) &&
+    track.start >= 0 && track.end > track.start + 10 &&
+    (index === 0 ? track.start < 0.15 :
+      Math.abs(track.start - data.tracks[index-1].end) < 0.15));
+}
+async function loadBGMerBundle() {
+  if (bgmerBundleLoading || typeof fetch !== 'function') return;
+  bgmerBundleLoading = true;
+  try {
+    const response = await fetch(BGMER_BUNDLE_MANIFEST, {cache:'no-store'});
+    if (!response.ok) throw new Error('音源が未配置');
+    const manifest = await response.json();
+    if (!validateBGMerBundle(manifest)) throw new Error('音源の構成が不正');
+    // 配置済み実体を検証。manifestだけ先に公開されても自作BGMへ安全にフォールバック。
+    const fileResponse = await fetch('assets/music/' + manifest.file, {method:'HEAD',cache:'no-store'});
+    if (!fileResponse.ok) throw new Error('音声ファイル未配置');
+    bgmerBundle = manifest;
+    const info = document.getElementById('bgmerAvailability');
+    if (info) info.textContent = '3曲の音源：準備OK（次の出発から再生）';
+  } catch(e) {
+    bgmerBundle = null;
+    const info = document.getElementById('bgmerAvailability');
+    if (info) info.textContent = '音源未配置：現在は既存の自作BGMを再生しています。';
+  } finally {
+    bgmerBundleLoading = false;
+  }
+}
 let musicAudio = null, musicOn = true, musicPreviewing = false, musicPreviewTimer = null;
 let currentMusicPhase = -1;
 let musicRequestId = 0;
@@ -738,7 +807,8 @@ function makeMusicWave() {
 function getMusicAudio() {
   if (musicAudio) return musicAudio;
   try {
-    const src = URL.createObjectURL(makeMusicWave());
+    musicUsingBGMer = !!bgmerBundle;
+    const src = musicUsingBGMer ? 'assets/music/' + bgmerBundle.file : URL.createObjectURL(makeMusicWave());
     const audio = document.createElement('audio');
     audio.src = src;
     audio.loop = true;
@@ -764,10 +834,11 @@ function getMusicPhase() {
 function keepMusicInCurrentTheme() {
   if (!musicAudio || (!running && !musicPreviewing) || musicAudio.paused) return;
   const phase = Math.max(0, currentMusicPhase);
-  const start = MUSIC_PHASE_STARTS[phase], end = MUSIC_PHASE_ENDS[phase];
+  const start = musicStageStart(phase), end = musicStageEnd(phase);
   const t = musicAudio.currentTime;
   if (typeof t !== 'number' || !Number.isFinite(t)) return;
-  if (t >= end - 0.035 || t < start - 0.035) {
+  const edgeMargin = musicUsingBGMer ? 0.30 : 0.035;
+  if (t >= end - edgeMargin || t < start - 0.035) {
     try { musicAudio.currentTime = start; } catch(e) {}
   }
 }
@@ -778,16 +849,19 @@ function updateMusicPhase() {
   currentMusicPhase = phase;
   if (musicAudio) {
     try {
-      musicAudio.playbackRate = MUSIC_RATES[phase];
-      if (previousPhase === -1 || (previousPhase === 0) !== (phase === 0)) {
-        musicAudio.currentTime = MUSIC_PHASE_STARTS[phase];
+      musicAudio.playbackRate = musicStageRate(phase);
+      if (musicUsingBGMer || previousPhase === -1 || (previousPhase === 0) !== (phase === 0)) {
+        musicAudio.currentTime = musicStageStart(phase);
       }
     } catch(e) {}
   }
   const pace = document.getElementById('musicPace');
   if (pace) {
-    pace.textContent = MUSIC_PHASE_LABELS[phase];
+    pace.textContent = musicStageLabel(phase);
     pace.setAttribute('data-phase', String(phase));
+  }
+  if (musicUsingBGMer && musicAudio && !musicAudio.paused) {
+    setMusicStatus('🎵 BGMer『' + BGMER_TRACK_TITLES[phase] + '』再生中');
   }
 }
 function startMusic() {
@@ -796,7 +870,7 @@ function startMusic() {
   if (!a) return;
   currentMusicPhase = -1;
   if (running) updateMusicPhase();
-  else { a.playbackRate = MUSIC_RATES[0]; a.currentTime = MUSIC_PHASE_STARTS[0]; }
+  else { a.playbackRate = musicStageRate(0); a.currentTime = musicStageStart(0); }
   const requestId = ++musicRequestId;
   a.volume = 0.75;
   // Safariではplay()をユーザー操作から直接呼ぶことが必要
@@ -805,14 +879,15 @@ function startMusic() {
     setMusicStatus('🎵 BGM再生を開始しています');
     if (playResult && typeof playResult.then === 'function') {
       playResult.then(() => {
-        if (requestId === musicRequestId) setMusicStatus('🎵 BGM再生中');
+        if (requestId === musicRequestId) setMusicStatus(
+          musicUsingBGMer ? '🎵 BGMer『' + BGMER_TRACK_TITLES[Math.max(0,currentMusicPhase)] + '』再生中' : '🎵 自作BGM再生中（指定音源は未配置）');
       }).catch(() => {
         if (requestId === musicRequestId) {
           setMusicStatus('音を出せませんでした。もう一度「音楽をためす」をタップ');
         }
       });
     } else {
-      setMusicStatus('🎵 BGM再生中');
+      setMusicStatus(musicUsingBGMer ? '🎵 BGMer楽曲再生中' : '🎵 自作BGM再生中（指定音源は未配置）');
     }
   } catch(e) {
     setMusicStatus('音を出せませんでした。もう一度「音楽をためす」をタップ');
@@ -825,9 +900,13 @@ function stopMusic() {
   musicPreviewTimer = null;
   musicPreviewing = false;
   if (musicAudio) {
-    try { musicAudio.pause(); musicAudio.currentTime = 0; musicAudio.playbackRate = MUSIC_RATES[0]; } catch(e) {}
+    try { musicAudio.pause(); musicAudio.currentTime = 0; musicAudio.playbackRate = musicStageRate(0); } catch(e) {}
+    if (!musicUsingBGMer && bgmerBundle) {
+      // 非再生中にのみ本物の音源へ切り替える。iPhoneで再生中のsrcは入れ替えない。
+      musicAudio = null;
+    }
   }
-  setMusicStatus('BGM：準備OK');
+  setMusicStatus(bgmerBundle ? 'BGM：BGMerの3曲を準備OK' : 'BGM：自作曲（指定音源未配置）');
   const btn = document.getElementById('testMusicBtn');
   if (btn) btn.textContent = '🎧 音楽をためす（5秒）';
 }
@@ -1250,6 +1329,7 @@ function showToast(msg) {
 // 初期化 — scriptの末尾で直接実行（ローカルHTML対応）
 // ============================================================
 selectRoute(0);
+loadBGMerBundle();
 </script>
 </body>
 </html>
