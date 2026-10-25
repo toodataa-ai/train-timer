@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "file": "bgmer-train-timer.m4a",
+  "provider": "BGMer",
+  "provider_url": "https://bgmer.net/",
+  "source_method": "user-uploaded-official-download",
+  "tracks": [
+    {
+      "title": "並走ハピネス",
+      "source_url": "https://bgmer.net/music/277/",
+      "start": 0,
+      "end": 90
+    },
+    {
+      "title": "グルーヴコースター",
+      "source_url": "https://bgmer.net/music/251/",
+      "start": 90,
+      "end": 180
+    },
+    {
+      "title": "爆発寸前！",
+      "source_url": "https://bgmer.net/music/148/",
+      "start": 180,
+      "end": 268
+    }
+  ]
+}
