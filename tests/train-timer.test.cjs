@@ -38,6 +38,14 @@ class FakeElement {
     this.scrollTop = 0;
     this.hidden = false;
     this.children = [];
+    this.listeners = new Map();
+  }
+  addEventListener(type, callback) {
+    if (!this.listeners.has(type)) this.listeners.set(type, []);
+    this.listeners.get(type).push(callback);
+  }
+  dispatchEvent(event) {
+    for (const fn of this.listeners.get(event.type) || []) fn(event);
   }
   get innerHTML() { return this._html || ''; }
   set innerHTML(value) { this._html = value; if (value === '') this.children = []; }
@@ -51,7 +59,7 @@ function makeApp({wakeLockRequest} = {}) {
     if (!elements.has(id)) elements.set(id, new FakeElement());
     return elements.get(id);
   };
-  const buttons = Array.from({length: 6}, () => new FakeElement());
+  const buttons = Array.from({length: 7}, () => new FakeElement());
   const mediaElements = [], audioBlobs = [];
   let clock = 1_700_000_000_000;
   let nextTimerId = 1;
@@ -106,16 +114,17 @@ function makeApp({wakeLockRequest} = {}) {
   return {run, el, advance: ms => { clock += ms; }, buttons, mediaElements, audioBlobs};
 }
 
-test('six existing and new routes have the expected Tokyo-origin destinations', () => {
+test('seven routes include a full Tokyo-to-Tokyo Yamanote outer loop', () => {
   const {run,el,buttons} = makeApp();
   const routes = run('ROUTES.map(r => ({from:r.from,to:r.to,n:r.stations.length}))');
   assert.deepEqual(Array.from(routes, r => [r.from,r.to]), [
     ['三鷹','千葉'], ['博多','東京'], ['高尾','東京'],
-    ['松本','新宿'], ['東京','新青森'], ['東京','敦賀']
+    ['松本','新宿'], ['東京','新青森'], ['東京','敦賀'], ['東京','東京']
   ]);
   assert.equal(routes[4].n, 23);
   assert.equal(routes[5].n, 24);
-  assert.equal(buttons.length, 6);
+  assert.equal(routes[6].n, 31, '30 distinct Yamanote stations plus Tokyo again');
+  assert.equal(buttons.length, 7);
   for (let i = 0; i < routes.length; i++) {
     run('selectRoute('+i+')');
     assert.equal(el('labelFrom').textContent, routes[i].from);
@@ -124,6 +133,14 @@ test('six existing and new routes have the expected Tokyo-origin destinations', 
     assert.ok(buttons[i].classList.contains('active'));
   }
   assert.equal(el('routeNote').hidden, false);
+  assert.deepEqual(Array.from(run('ROUTES[6].stations.map(s => s.name)')), [
+    '東京','有楽町','新橋','浜松町','田町','高輪ゲートウェイ','品川','大崎',
+    '五反田','目黒','恵比寿','渋谷','原宿','代々木','新宿','新大久保',
+    '高田馬場','目白','池袋','大塚','巣鴨','駒込','田端','西日暮里',
+    '日暮里','鶯谷','上野','御徒町','秋葉原','神田','東京'
+  ]);
+  assert.equal(run('ROUTES[6].stations[0].num'), 'JY01');
+  assert.equal(run('ROUTES[6].stations.at(-1).num'), 'JY01');
 });
 
 test('station progress only reaches the terminus when the timer expires', () => {
@@ -236,57 +253,73 @@ test('BGM starts, stops and resumes alongside timer, even after a silent-mode op
 });
 
 
-test('three-stage racing soundtrack accelerates at exactly 50% and 20% remaining', () => {
+test('calm 90 BPM theme changes to a different 150 BPM song at halfway and speeds up at 20%', async () => {
   const {run,el,advance,mediaElements,audioBlobs} = makeApp();
-  run('selectRoute(5)'); // 北陸新幹線、5分
+  run('selectRoute(6)');
   run('handleStart()');
-  assert.equal(mediaElements.length,1);
-  const audio=mediaElements[0];
-  assert.equal(audio.playbackRate,1.12);
-  assert.ok(el('musicPace').textContent.includes('125 BPM'));
+  const audio = mediaElements[0];
+  assert.equal(audio.playbackRate,1);
+  assert.ok(el('musicPace').textContent.includes('90 BPM'));
   assert.equal(el('musicPace').attributes['data-phase'],'0');
   assert.equal(audio.playCount,1);
-  const src=audio.src;
+  const src = audio.src;
+  const calmSeconds = Number(run('MUSIC_CALM_SECONDS'));
+  const fastSeconds = Number(run('MUSIC_FAST_SECONDS'));
+  assert.ok(calmSeconds > 10);
+  assert.ok(fastSeconds > 8);
+  const wav = new DataView(await audioBlobs[0].arrayBuffer());
+  // Both segments must have genuinely different PCM content.
+  const sampleAt = t => wav.getInt16(44+Math.floor(t*22050)*2,true);
+  assert.notEqual(sampleAt(2.2), sampleAt(calmSeconds+2.2));
+  audio.currentTime = calmSeconds - 0.012;
+  run('keepMusicInCurrentTheme()');
+  assert.equal(audio.currentTime,0, 'calm song loops within its own section');
 
   advance(149999); run('tick()');
-  assert.equal(audio.playbackRate,1.12,'must not speed up before halfway');
+  assert.equal(audio.playbackRate,1);
   advance(1); run('tick()');
-  assert.equal(audio.playbackRate,1.34,'accelerates immediately at 50%');
+  assert.equal(audio.playbackRate,1.34);
   assert.ok(el('musicPace').textContent.includes('150 BPM'));
   assert.equal(el('musicPace').attributes['data-phase'],'1');
-  assert.equal(audio.src,src,'no source swapping');
-  assert.equal(audio.playCount,1,'phase change must not invoke another play');
+  assert.equal(audio.currentTime,calmSeconds, 'jumps to a different melody, not just new speed');
+  assert.equal(audio.src,src,'one WAV and one iPhone audio player');
+  assert.equal(audio.playCount,1,'no additional play request when switching songs');
+  audio.currentTime=calmSeconds+fastSeconds-0.01;
+  audio.dispatchEvent({type:'timeupdate'});
+  assert.equal(audio.currentTime,calmSeconds, 'fast song loops within its own section');
 
   advance(89999); run('tick()');
-  assert.equal(audio.playbackRate,1.34,'second stage lasts through >20%');
+  assert.equal(audio.playbackRate,1.34);
   advance(1); run('tick()');
-  assert.equal(audio.playbackRate,1.65,'final sprint at <=20%');
+  assert.equal(audio.playbackRate,1.65);
   assert.ok(el('musicPace').textContent.includes('185 BPM'));
   assert.equal(el('musicPace').attributes['data-phase'],'2');
-  assert.equal(audio.playCount,1,'no iPhone autoplay issues on phase switching');
-  assert.equal(audioBlobs.length,1,'all stages use same generated WAV');
+  assert.equal(audio.src,src);
+  assert.equal(audio.playCount,1);
+  assert.equal(audioBlobs.length,1);
 
   run('handleStart()'); // pause
   assert.equal(audio.paused,true);
   run('handleStart()'); // resume
-  assert.equal(audio.playbackRate,1.65,'resume keeps final tempo');
+  assert.equal(audio.playbackRate,1.65);
+  assert.equal(audio.currentTime,calmSeconds,'resume returns to the fast theme');
   assert.equal(audio.playCount,2);
   run('handleReset()');
   assert.equal(audio.paused,true);
-  assert.equal(audio.playbackRate,1.12,'reset goes back to beginning tempo');
+  assert.equal(audio.playbackRate,1);
   assert.equal(el('musicPace').textContent,'🎵 出発準備中');
   assert.equal(el('musicPace').attributes['data-phase'],'0');
 });
 
-test('new racing song is different from the old sparse melody and previews at normal tempo', () => {
+test('music preview starts at calm melody while preserving the fast melody data', () => {
   const {run,el,mediaElements,audioBlobs} = makeApp();
-  const m=Array.from(run('MUSIC_MELODY'));
-  assert.equal(m.length,32);
-  assert.ok(m.every(f=>f>0),'fast eighth-note melody never leaves a beat empty');
-  assert.ok(m.includes(1318.51),'includes soaring lead notes');
+  assert.equal(Array.from(run('MUSIC_MELODY')).length,32);
+  assert.equal(Array.from(run('MUSIC_CALM_MELODY')).length,16);
+  assert.ok(Array.from(run('MUSIC_MELODY')).includes(1318.51));
   assert.equal(Number(run('MUSIC_RATES[2]')),1.65);
   run('testMusic()');
-  assert.equal(mediaElements[0].playbackRate,1.12);
+  assert.equal(mediaElements[0].playbackRate,1);
+  assert.equal(mediaElements[0].currentTime,0);
   assert.equal(audioBlobs.length,1);
   assert.ok(el('testMusicBtn').textContent.includes('とめる'));
   run('testMusic()');
@@ -408,4 +441,44 @@ test('unsupported or rejected wake lock never breaks existing timer controls', a
   await flushMicrotasks();
   assert.equal(rejected.run('running'), true);
   rejected.run('handleReset()');
+});
+
+test('wake-lock diagnostic reports supported/active/failed/unsupported states and offers safe manual retry', async () => {
+  const noSupport=makeApp();
+  noSupport.run('handleStart()');
+  assert.equal(noSupport.el('wakePanel').hidden,false);
+  assert.equal(noSupport.el('wakeStatus').attributes['data-state'],'unsupported');
+  assert.equal(noSupport.el('wakeRetry').hidden,true);
+  noSupport.run('handleReset()');
+  assert.equal(noSupport.el('wakePanel').hidden,true);
+
+  let shouldFail=true;
+  const app=makeApp({wakeLockRequest() {
+    if (shouldFail) return Promise.reject(Object.assign(new Error('denied'),{name:'NotAllowedError'}));
+    return Promise.resolve(fakeWakeSentinel());
+  }});
+  app.run('handleStart()');
+  await flushMicrotasks();
+  assert.equal(app.el('wakeStatus').attributes['data-state'],'failed');
+  assert.equal(app.el('wakeRetry').hidden,false);
+  assert.ok(app.el('wakeStatus').textContent.includes('NotAllowedError'));
+  shouldFail=false;
+  app.run('retryScreenWakeLock()');
+  await flushMicrotasks();
+  assert.equal(app.el('wakeStatus').attributes['data-state'],'active');
+  assert.equal(app.el('wakeRetry').hidden,true);
+  app.run('handleReset()');
+  assert.equal(app.el('wakePanel').hidden,true);
+});
+
+test('Yamanote loop reaches Tokyo only at timer end and retains correct station code', () => {
+  const {run,el,advance}=makeApp();
+  run('selectRoute(6)');
+  run('handleStart()');
+  advance(240000); run('tick()');
+  assert.notEqual(el('currentStation').textContent,'📍 東京');
+  advance(60000); run('tick()');
+  assert.equal(el('currentStation').textContent,'📍 東京');
+  assert.equal(run('running'),false);
+  assert.ok(el('overlayTitle').textContent.includes('一周'));
 });
