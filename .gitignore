@@ -1,0 +1,4 @@
+# BGMer MP3 files must be downloaded manually from the official website.
+# The bundled output files are intentionally versioned for GitHub Pages.
+assets/music/source/
+assets/music/*.partial.m4a
