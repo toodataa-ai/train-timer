@@ -45,7 +45,7 @@ class FakeElement {
   appendChild(el) { this.children.push(el); }
   scrollIntoView() {}
 }
-function makeApp() {
+function makeApp({wakeLockRequest} = {}) {
   const elements = new Map();
   const el = id => {
     if (!elements.has(id)) elements.set(id, new FakeElement());
@@ -57,7 +57,21 @@ function makeApp() {
   let nextTimerId = 1;
   const timers = new Map();
   class Clock extends Date { static now() { return clock; } }
+  const eventTarget = () => {
+    const listeners = new Map();
+    return {
+      addEventListener(type, callback) {
+        if (!listeners.has(type)) listeners.set(type, []);
+        listeners.get(type).push(callback);
+      },
+      dispatchEvent(event) {
+        for (const callback of listeners.get(event.type) || []) callback(event);
+      }
+    };
+  };
   const document = {
+    ...eventTarget(),
+    visibilityState: 'visible',
     body: new FakeElement(),
     getElementById: el,
     createElement(tag) {
@@ -74,7 +88,8 @@ function makeApp() {
     querySelectorAll: selector => selector === '.route-btn' ? buttons : []
   };
   const ctx = vm.createContext({
-    window: {}, document, Date: Clock, console, Blob,
+    window: eventTarget(), document, navigator: wakeLockRequest ? {wakeLock: {request: wakeLockRequest}} : {},
+    Date: Clock, console, Blob,
     URL: {
       createObjectURL(blob) {
         audioBlobs.push(blob);
@@ -276,4 +291,121 @@ test('new racing song is different from the old sparse melody and previews at no
   assert.ok(el('testMusicBtn').textContent.includes('とめる'));
   run('testMusic()');
   assert.equal(mediaElements[0].paused,true);
+});
+
+function fakeWakeSentinel() {
+  const listeners = [];
+  return {
+    released: false, releaseCount: 0,
+    addEventListener(type, fn) { if (type === 'release') listeners.push(fn); },
+    release() {
+      this.released = true;
+      this.releaseCount++;
+      listeners.forEach(fn => fn());
+      return Promise.resolve();
+    }
+  };
+}
+const flushMicrotasks = () => new Promise(resolve => setImmediate(resolve));
+
+test('screen stays awake after departure and during pause; reset/finish/route switch release it', async () => {
+  const types = [], sentinels = [];
+  const {run} = makeApp({wakeLockRequest(type) {
+    types.push(type);
+    const lock = fakeWakeSentinel();
+    sentinels.push(lock);
+    return Promise.resolve(lock);
+  }});
+  assert.equal(run('screenWakeDesired'), false, 'initial display uses the normal auto-lock');
+  run('handleStart()');
+  await flushMicrotasks();
+  assert.deepEqual(types, ['screen']);
+  assert.equal(run('screenWakeLock !== null'), true);
+  run('handleStart()'); // pause
+  assert.equal(run('screenWakeDesired'), true, 'pause keeps the screen awake');
+  assert.equal(sentinels[0].releaseCount, 0);
+  run('handleStart()'); // resume
+  await flushMicrotasks();
+  assert.equal(types.length, 1, 'do not create redundant wake-lock requests');
+  run('handleReset()');
+  assert.equal(sentinels[0].releaseCount, 1);
+  assert.equal(run('screenWakeDesired'), false);
+
+  run('handleStart()');
+  await flushMicrotasks();
+  run('finish()');
+  assert.equal(sentinels[1].releaseCount, 1, 'arrival releases the lock');
+
+  run('handleReset()');
+  run('handleStart()');
+  await flushMicrotasks();
+  run('selectRoute(5)');
+  assert.equal(sentinels[2].releaseCount, 1, 'route change releases the lock');
+});
+
+test('backgrounding releases the wake lock and foregrounding reacquires it, even while paused', async () => {
+  const locks = [];
+  const {run} = makeApp({wakeLockRequest() {
+    const lock = fakeWakeSentinel();
+    locks.push(lock);
+    return Promise.resolve(lock);
+  }});
+  run('handleStart()');
+  await flushMicrotasks();
+  run('handleStart()'); // pause
+  run("document.visibilityState = 'hidden'; document.dispatchEvent({type:'visibilitychange'})");
+  assert.equal(locks[0].releaseCount, 1);
+  assert.equal(run('screenWakeDesired'), true);
+  run("document.visibilityState = 'visible'; document.dispatchEvent({type:'visibilitychange'})");
+  await flushMicrotasks();
+  assert.equal(locks.length, 2);
+  assert.equal(run('screenWakeLock !== null'), true);
+  run("window.dispatchEvent({type:'pagehide'})");
+  assert.equal(locks[1].releaseCount, 1);
+  run("window.dispatchEvent({type:'pageshow'})");
+  await flushMicrotasks();
+  assert.equal(locks.length, 3);
+  run('handleReset()');
+});
+
+test('pending wake-lock requests cannot leave a lock after reset or background switch', async () => {
+  const resolvers = [];
+  const {run} = makeApp({wakeLockRequest() {
+    return new Promise(resolve => resolvers.push(resolve));
+  }});
+  run('handleStart()');
+  assert.equal(resolvers.length, 1);
+  run('handleReset()');
+  const stale = fakeWakeSentinel();
+  resolvers[0](stale);
+  await flushMicrotasks();
+  assert.equal(stale.releaseCount, 1, 'late completion must be immediately released');
+  assert.equal(resolvers.length, 1, 'reset must not retry');
+
+  run('handleStart()');
+  run("document.visibilityState = 'hidden'; document.dispatchEvent({type:'visibilitychange'})");
+  run("document.visibilityState = 'visible'; document.dispatchEvent({type:'visibilitychange'})");
+  const backgrounded = fakeWakeSentinel();
+  resolvers[1](backgrounded);
+  await flushMicrotasks();
+  assert.equal(backgrounded.releaseCount, 1);
+  assert.equal(resolvers.length, 3, 'foreground is retried after previous request settles');
+  run('handleReset()');
+  const latest = fakeWakeSentinel();
+  resolvers[2](latest);
+  await flushMicrotasks();
+  assert.equal(latest.releaseCount, 1);
+});
+
+test('unsupported or rejected wake lock never breaks existing timer controls', async () => {
+  const noSupport = makeApp();
+  noSupport.run('handleStart()');
+  assert.equal(noSupport.run('running'), true);
+  noSupport.run('handleReset()');
+
+  const rejected = makeApp({wakeLockRequest: () => Promise.reject(new Error('battery saver'))});
+  rejected.run('handleStart()');
+  await flushMicrotasks();
+  assert.equal(rejected.run('running'), true);
+  rejected.run('handleReset()');
 });
