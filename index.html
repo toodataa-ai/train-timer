@@ -860,6 +860,9 @@ function updateMusicPhase() {
     pace.textContent = musicStageLabel(phase);
     pace.setAttribute('data-phase', String(phase));
   }
+  if (musicUsingBGMer && musicAudio && !musicAudio.paused) {
+    setMusicStatus('🎵 BGMer『' + BGMER_TRACK_TITLES[phase] + '』再生中');
+  }
 }
 function startMusic() {
   if (!musicOn || (!running && !musicPreviewing)) return;
