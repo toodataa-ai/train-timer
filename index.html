@@ -23,6 +23,7 @@ body.chuo      { --accent: #f15a22; }
 body.azusa     { --accent: #a05cc8; }
 body.tohoku    { --accent: #49cf79; }
 body.hokuriku  { --accent: #bd8fff; }
+body.yamanote  { --accent: #9dd746; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body {
@@ -41,6 +42,7 @@ body {
   -webkit-appearance: none;
 }
 .route-btn.active { border-color: var(--accent); color: var(--accent); }
+#rb6 { grid-column: 1 / -1; }
 
 .header { width: 100%; max-width: 560px; display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 14px; text-align: center; }
 .line-badge { font-size: 11px; font-weight: 900; letter-spacing: 2px; padding: 3px 14px; border-radius: 20px; background: var(--accent); color: #111; }
@@ -76,6 +78,11 @@ input[type=range]::-webkit-slider-thumb {
 .announce-row { width: 100%; max-width: 560px; margin-bottom: 10px; }
 .sound-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .audio-hint { width: 100%; max-width: 560px; margin: -4px 0 10px; color: #858da7; font-size: 11px; text-align: center; }
+.wake-panel { width: 100%; max-width: 560px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; line-height: 1.5; color: var(--text); }
+.wake-panel[hidden], #wakeRetry[hidden] { display: none; }
+#wakeStatus[data-state="active"] { color: var(--green); }
+#wakeStatus[data-state="failed"], #wakeStatus[data-state="unsupported"], #wakeStatus[data-state="released"] { color: var(--orange); }
+#wakeRetry { border: 1px solid var(--accent); border-radius: 8px; background: transparent; color: var(--accent); padding: 7px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .audio-test-row { width: 100%; max-width: 560px; display: flex; align-items: center; gap: 10px; margin: -3px 0 11px; }
 .btn-audio-test { flex-shrink: 0; background: var(--panel); color: var(--accent); border: 1px solid var(--accent); border-radius: 9px; padding: 9px 10px; font-size: 12px; font-weight: 750; cursor: pointer; -webkit-appearance: none; }
 #musicStatus { min-width: 0; color: #a7aec4; font-size: 11px; line-height: 1.35; }
@@ -183,6 +190,7 @@ input[type=range]::-webkit-slider-thumb {
   <button class="route-btn"        id="rb3" onclick="selectRoute(3)">🚆 あずさ<br><small>松本→新宿</small></button>
   <button class="route-btn"        id="rb4" onclick="selectRoute(4)">🚄 東北新幹線<br><small>東京→新青森</small></button>
   <button class="route-btn"        id="rb5" onclick="selectRoute(5)">🚄 北陸新幹線<br><small>東京→敦賀</small></button>
+  <button class="route-btn"        id="rb6" onclick="selectRoute(6)">🟢 山手線（外回り）<br><small>東京→東京・一周</small></button>
 </div>
 
 <div class="header">
@@ -221,7 +229,11 @@ input[type=range]::-webkit-slider-thumb {
   <button type="button" class="btn-audio-test" id="testMusicBtn" onclick="testMusic()">🎧 音楽をためす（5秒）</button>
   <span id="musicStatus" role="status" aria-live="polite">BGM：準備OK</span>
 </div>
-<div class="audio-hint">🎶 新しい疾走BGM！ 後半から速く、ラスト20%はさらに加速。音楽試聴もできます。</div>
+<div class="audio-hint">🎶 前半はのんびりメロディー。半分で別の疾走曲にチェンジ！ 残り20%はさらに加速します。</div>
+<div class="wake-panel" id="wakePanel" hidden>
+  <span id="wakeStatus" role="status" aria-live="polite" data-state="idle"></span>
+  <button id="wakeRetry" type="button" onclick="retryScreenWakeLock()" hidden>画面ロック防止を再試行</button>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -393,6 +405,45 @@ const ROUTES = [
        {name:"敦賀", ruby:"つるが", num:'HK24', ms:'key'}
     ]
   }
+  ,{
+    badge:'JR 山手線（外回り・一周）', title:'🟢 東京 → 東京 山手線あそびタイマー',
+    sub:'山手線をぐるっと一周！ 東京に戻ったら あそびおわり', icon:'🚃',
+    from:'東京', to:'東京', endIcon:'🎉', endTitle:'🚃 山手線を一周！ 東京に到着！',
+    whistle:'train', allStations:true,
+    stations:[
+      {name:'東京', ruby:'とうきょう', num:'JY01', ms:'key'},
+      {name:'有楽町', ruby:'ゆうらくちょう', num:'JY30', ms:null},
+      {name:'新橋', ruby:'しんばし', num:'JY29', ms:null},
+      {name:'浜松町', ruby:'はままつちょう', num:'JY28', ms:null},
+      {name:'田町', ruby:'たまち', num:'JY27', ms:null},
+      {name:'高輪ゲートウェイ', ruby:'たかなわげーとうぇい', num:'JY26', ms:null},
+      {name:'品川', ruby:'しながわ', num:'JY25', ms:'key'},
+      {name:'大崎', ruby:'おおさき', num:'JY24', ms:null},
+      {name:'五反田', ruby:'ごたんだ', num:'JY23', ms:null},
+      {name:'目黒', ruby:'めぐろ', num:'JY22', ms:null},
+      {name:'恵比寿', ruby:'えびす', num:'JY21', ms:null},
+      {name:'渋谷', ruby:'しぶや', num:'JY20', ms:'key'},
+      {name:'原宿', ruby:'はらじゅく', num:'JY19', ms:null},
+      {name:'代々木', ruby:'よよぎ', num:'JY18', ms:null},
+      {name:'新宿', ruby:'しんじゅく', num:'JY17', ms:'key'},
+      {name:'新大久保', ruby:'しんおおくぼ', num:'JY16', ms:null},
+      {name:'高田馬場', ruby:'たかだのばば', num:'JY15', ms:null},
+      {name:'目白', ruby:'めじろ', num:'JY14', ms:null},
+      {name:'池袋', ruby:'いけぶくろ', num:'JY13', ms:'key'},
+      {name:'大塚', ruby:'おおつか', num:'JY12', ms:null},
+      {name:'巣鴨', ruby:'すがも', num:'JY11', ms:null},
+      {name:'駒込', ruby:'こまごめ', num:'JY10', ms:null},
+      {name:'田端', ruby:'たばた', num:'JY09', ms:null},
+      {name:'西日暮里', ruby:'にしにっぽり', num:'JY08', ms:null},
+      {name:'日暮里', ruby:'にっぽり', num:'JY07', ms:null},
+      {name:'鶯谷', ruby:'うぐいすだに', num:'JY06', ms:null},
+      {name:'上野', ruby:'うえの', num:'JY05', ms:'key'},
+      {name:'御徒町', ruby:'おかちまち', num:'JY04', ms:null},
+      {name:'秋葉原', ruby:'あきはばら', num:'JY03', ms:'key'},
+      {name:'神田', ruby:'かんだ', num:'JY02', ms:null},
+      {name:'東京', ruby:'とうきょう', num:'JY01', ms:'key'}
+    ]
+  }
 ];
 
 // ============================================================
@@ -420,6 +471,32 @@ let screenWakeLock = null;
 let screenWakeLockRequest = null;
 let screenWakeLockEpoch = 0;
 
+function setWakeStatus(state, explanation = '') {
+  const panel = document.getElementById('wakePanel');
+  const el = document.getElementById('wakeStatus');
+  const retry = document.getElementById('wakeRetry');
+  if (!panel || !el || !retry) return;
+  panel.hidden = !screenWakeDesired;
+  el.setAttribute('data-state', state);
+  const messages = {
+    idle: '', requesting: '画面ロック防止を設定しています…',
+    active: '✅ 画面ロック防止：有効',
+    unsupported: '⚠️ この環境では画面ロック防止APIが使えません。iPhoneの「設定 → 画面表示と明るさ → 自動ロック」で一時的に「なし」を選んでください。',
+    failed: '⚠️ 画面ロック防止に失敗しました。省電力モードなどの設定を確認してください。',
+    released: '⚠️ 画面ロック防止が解除されました。再試行できます。',
+    background: 'アプリが表示されていないため、画面ロック防止を一時解除しています。'
+  };
+  el.textContent = (messages[state] || '') + (explanation ? ' (' + explanation + ')' : '');
+  retry.hidden = !(screenWakeDesired && (state === 'failed' || state === 'released') &&
+    typeof navigator !== 'undefined' && navigator.wakeLock &&
+    typeof navigator.wakeLock.request === 'function');
+}
+
+function retryScreenWakeLock() {
+  if (!screenWakeDesired) return;
+  acquireScreenWakeLock();
+}
+
 // 非表示への遷移やリセット中にrequestが完了しても、ロックを残さない。
 function releaseScreenWakeLock() {
   screenWakeLockEpoch++;
@@ -428,20 +505,27 @@ function releaseScreenWakeLock() {
   if (lock) {
     try { Promise.resolve(lock.release()).catch(() => {}); } catch(e) {}
   }
+  if (!screenWakeDesired) setWakeStatus('idle');
+  else if (document.visibilityState !== 'visible') setWakeStatus('background');
+  else setWakeStatus('released');
 }
 
 async function acquireScreenWakeLock() {
   if (!screenWakeDesired || document.visibilityState !== 'visible' ||
-      screenWakeLock || screenWakeLockRequest ||
-      typeof navigator === 'undefined' || !navigator.wakeLock ||
-      typeof navigator.wakeLock.request !== 'function') return;
-
+      screenWakeLock || screenWakeLockRequest) return;
+  if (typeof navigator === 'undefined' || !navigator.wakeLock ||
+      typeof navigator.wakeLock.request !== 'function') {
+    setWakeStatus('unsupported');
+    return;
+  }
+  setWakeStatus('requesting');
   const epoch = screenWakeLockEpoch;
   let request;
   try {
     request = Promise.resolve(navigator.wakeLock.request('screen'));
   } catch(e) {
-    return; // 未対応ブラウザーやシステム拒否でもタイマーは動かす
+    if (epoch === screenWakeLockEpoch) setWakeStatus('failed', e && e.name || 'request');
+    return;
   }
   screenWakeLockRequest = request;
 
@@ -453,11 +537,15 @@ async function acquireScreenWakeLock() {
       return;
     }
     screenWakeLock = lock;
+    setWakeStatus('active');
     lock.addEventListener('release', () => {
-      if (screenWakeLock === lock) screenWakeLock = null;
+      if (screenWakeLock === lock) {
+        screenWakeLock = null;
+        if (screenWakeDesired && document.visibilityState === 'visible') setWakeStatus('released');
+      }
     });
   } catch(e) {
-    // 低電力モード等で拒否されても、既存のタイマー・音声機能に影響させない。
+    if (epoch === screenWakeLockEpoch && screenWakeDesired) setWakeStatus('failed', e && e.name || 'request');
   } finally {
     if (screenWakeLockRequest === request) screenWakeLockRequest = null;
     // 非表示→表示の切替中に古い要求が完了したケースだけ、現在の状態で再要求。
@@ -531,12 +619,25 @@ function playWhistle() {
 // iPhoneの消音設定で無音になりやすい Web Audio オシレーターではなく、
 // 通常の <audio> 要素から再生する PCM WAV 音源に変更（外部通信不要）。
 // ============================================================
-const MUSIC_STEP_SECONDS = 60 / 112 / 2; // 112 BPM 基準：再生倍率で125/150/185 BPMに加速
-const MUSIC_RATES = [1.12, 1.34, 1.65];
+const MUSIC_STEP_SECONDS = 60 / 112 / 2; // 疾走曲は112 BPMの音源を1.34/1.65倍で再生
+const MUSIC_CALM_STEP_SECONDS = 60 / 90; // 出発曲は90 BPM、異なるメロディー
+const MUSIC_CALM_SECONDS = 16 * MUSIC_CALM_STEP_SECONDS;
+const MUSIC_FAST_SECONDS = 32 * MUSIC_STEP_SECONDS;
+const MUSIC_PHASE_STARTS = [0, MUSIC_CALM_SECONDS, MUSIC_CALM_SECONDS];
+const MUSIC_PHASE_ENDS = [MUSIC_CALM_SECONDS, MUSIC_CALM_SECONDS + MUSIC_FAST_SECONDS, MUSIC_CALM_SECONDS + MUSIC_FAST_SECONDS];
+const MUSIC_RATES = [1, 1.34, 1.65];
 const MUSIC_PHASE_LABELS = [
-  '🎵 ワクワク出発！ 約125 BPM',
-  '⚡ 後半、スピードアップ！ 約150 BPM',
+  '🎵 のんびり出発！ 約90 BPM',
+  '⚡ 別の疾走曲にチェンジ！ 約150 BPM',
   '🔥 ラストスパート！ 約185 BPM'
+];
+const MUSIC_CALM_MELODY = [
+  392,440,523.25,440, 349.23,392,440,523.25,
+  329.63,392,440,392, 293.66,349.23,392,523.25
+];
+const MUSIC_CALM_CHORDS = [
+  [261.63,329.63,392], [220,261.63,329.63],
+  [174.61,220,261.63], [196,246.94,392]
 ];
 // 「列車が疾走する」イメージの新しいオリジナルメロディー。高音の
 // 8分音符を連続させ、ベース・キック・スネア・ハイハットを重ねる。
@@ -559,9 +660,9 @@ function setMusicStatus(message) {
   if (el) el.textContent = message;
 }
 function makeMusicWave() {
-  // 8.57秒のループ、22.05kHz/16-bit/mono ≒ 370KB
+  // 別々のメロディーを1つのPCM WAVに収録。iOSでもsrc変更や2個目のplay()が不要。
   const rate = 22050;
-  const duration = 32 * MUSIC_STEP_SECONDS;
+  const duration = MUSIC_PHASE_ENDS[2];
   const frameCount = Math.round(rate * duration);
   const buffer = new ArrayBuffer(44 + frameCount * 2);
   const v = new DataView(buffer);
@@ -570,56 +671,67 @@ function makeMusicWave() {
   };
   str(0, 'RIFF'); v.setUint32(4, 36 + frameCount * 2, true);
   str(8, 'WAVE'); str(12, 'fmt ');
-  v.setUint32(16, 16, true); v.setUint16(20, 1, true); // PCM
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true);
   v.setUint16(22, 1, true); v.setUint32(24, rate, true);
   v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
   str(36, 'data'); v.setUint32(40, frameCount * 2, true);
   const tau = Math.PI * 2;
   const sin = (f,t) => Math.sin(tau * f * t);
   for (let i = 0; i < frameCount; i++) {
-    const t = i / rate, step = Math.min(31, Math.floor(t / MUSIC_STEP_SECONDS));
-    const inStep = t - step * MUSIC_STEP_SECONDS;
-    const chordIndex = Math.floor(step / 8);
-    const chordT = (step % 8) * MUSIC_STEP_SECONDS + inStep;
-    const melodyFreq = MUSIC_MELODY[step];
-
-    // 走り続ける8分音符：粒立ちのよいゲーム音楽風シンセリード
-    const leadEnvelope = Math.min(1, inStep / 0.006) *
-      Math.max(0,Math.min(1,(MUSIC_STEP_SECONDS - 0.012 - inStep) / 0.040));
-    const lead = 0.31 * leadEnvelope * (
-      0.66 * sin(melodyFreq, inStep) +
-      0.22 * sin(melodyFreq * 2, inStep) +
-      0.12 * sin(melodyFreq * 3, inStep));
-
-    // シンセアルペジオ：コードの分散和音がリズムを後押し
-    const chord = MUSIC_CHORDS[chordIndex];
-    const arpeggio = 0.065 * Math.sin(tau * chord[(step + 1) % 3] * 2 * t) *
-      Math.min(1,inStep / 0.012) * Math.exp(-inStep * 5);
-    const padFade = Math.min(1,chordT / 0.045) *
-      Math.max(0,Math.min(1,(8 * MUSIC_STEP_SECONDS - chordT) / 0.04));
-    const pad = chord.reduce((sum,f) => sum + sin(f,t),0) * 0.021 * padFade;
-
-    // ベースは2拍子のノリに合わせて鳴らす。各拍の「ドン」が列車らしさを作る。
-    const beatT = (step % 2) * MUSIC_STEP_SECONDS + inStep;
-    const bass = 0.16 * (0.82 * sin(MUSIC_BASS[chordIndex],t) +
-      0.18 * sin(MUSIC_BASS[chordIndex]*2,t)) *
-      Math.min(1,beatT / 0.009) * Math.exp(-beatT * 3.6);
-
-    // キック（低音域のピッチダウン）、スネア（ノイズ状倍音）、刻むハイハット
-    const kick = step % 2 === 0
-      ? 0.19 * sin(48 + 125 * Math.exp(-inStep*42), inStep) *
-        Math.exp(-inStep*23) : 0;
-    const snare = step % 4 === 2 ? 0.11 *
-      (Math.sin(tau*3250*t) * Math.sin(tau*7013*t) +
-       0.30 * sin(190,t)) * Math.exp(-inStep*26) : 0;
-    const hat = 0.050 *
-      Math.sin(tau * 6900 * t) * Math.sin(tau * 9277 * t) *
-      Math.exp(-inStep * (step % 2 ? 44 : 66));
-
-    // ループの境界でクリック音を出さない
-    const edgeFade = Math.max(0,Math.min(1,t / 0.014,(duration-t) / 0.014));
-    const sample = Math.tanh((lead+arpeggio+pad+bass+kick+snare+hat)*1.05)*edgeFade;
-    v.setInt16(44 + i*2,Math.round(Math.max(-1,Math.min(1,sample))*32767),true);
+    const globalT = i / rate;
+    const calm = globalT < MUSIC_CALM_SECONDS;
+    const t = calm ? globalT : globalT - MUSIC_CALM_SECONDS;
+    let sample;
+    if (calm) {
+      // 鐘のような柔らかい音色とゆったりした4小節の旋律（90 BPM）。
+      const step = Math.min(15, Math.floor(t / MUSIC_CALM_STEP_SECONDS));
+      const inStep = t - step * MUSIC_CALM_STEP_SECONDS;
+      const melody = MUSIC_CALM_MELODY[step];
+      const envelope = Math.min(1, inStep / 0.025) * Math.exp(-inStep * 2.7);
+      const bell = 0.43 * envelope * (0.76 * sin(melody,t) + 0.24 * sin(melody * 2,t));
+      const chord = MUSIC_CALM_CHORDS[Math.floor(step / 4)];
+      const chordT = t % (4 * MUSIC_CALM_STEP_SECONDS);
+      const padEnvelope = Math.min(1, chordT / 0.1) *
+        Math.max(0, Math.min(1, (4 * MUSIC_CALM_STEP_SECONDS - chordT) / 0.1));
+      const pad = chord.reduce((sum, f) => sum + sin(f,t), 0) * 0.045 * padEnvelope;
+      const bassT = t % (2 * MUSIC_CALM_STEP_SECONDS);
+      const bass = 0.15 * sin(chord[0]/2,t) * Math.min(1,bassT/0.04) * Math.exp(-bassT*2.1);
+      sample = bell + pad + bass;
+    } else {
+      // 後半は完全に別の32音メロディー、ドラムとベースの疾走テーマ。
+      const step = Math.min(31, Math.floor(t / MUSIC_STEP_SECONDS));
+      const inStep = t - step * MUSIC_STEP_SECONDS;
+      const chordIndex = Math.floor(step / 8);
+      const chordT = (step % 8) * MUSIC_STEP_SECONDS + inStep;
+      const melodyFreq = MUSIC_MELODY[step];
+      const leadEnvelope = Math.min(1, inStep / 0.006) *
+        Math.max(0, Math.min(1, (MUSIC_STEP_SECONDS - 0.012 - inStep) / 0.040));
+      const lead = 0.31 * leadEnvelope * (
+        0.66 * sin(melodyFreq, inStep) +
+        0.22 * sin(melodyFreq * 2, inStep) +
+        0.12 * sin(melodyFreq * 3, inStep));
+      const chord = MUSIC_CHORDS[chordIndex];
+      const arpeggio = 0.065 * sin(chord[(step+1)%3] * 2, t) *
+        Math.min(1,inStep / 0.012) * Math.exp(-inStep * 5);
+      const padFade = Math.min(1,chordT / 0.045) *
+        Math.max(0, Math.min(1, (8 * MUSIC_STEP_SECONDS - chordT) / 0.04));
+      const pad = chord.reduce((sum,f) => sum+sin(f,t),0) * 0.021 * padFade;
+      const beatT = (step % 2) * MUSIC_STEP_SECONDS + inStep;
+      const bass = 0.16 * (0.82 * sin(MUSIC_BASS[chordIndex],t) +
+        0.18 * sin(MUSIC_BASS[chordIndex]*2,t)) *
+        Math.min(1,beatT / 0.009) * Math.exp(-beatT * 3.6);
+      const kick = step % 2 === 0
+        ? 0.19 * sin(48 + 125 * Math.exp(-inStep*42), inStep) * Math.exp(-inStep*23) : 0;
+      const snare = step % 4 === 2 ? 0.11 *
+        (sin(3250,t) * sin(7013,t) + 0.30 * sin(190,t)) * Math.exp(-inStep*26) : 0;
+      const hat = 0.050 * sin(6900,t) * sin(9277,t) *
+        Math.exp(-inStep * (step % 2 ? 44 : 66));
+      sample = lead + arpeggio + pad + bass + kick + snare + hat;
+    }
+    const partDuration = calm ? MUSIC_CALM_SECONDS : MUSIC_FAST_SECONDS;
+    const edgeFade = Math.max(0, Math.min(1, t/0.014, (partDuration-t)/0.014));
+    sample = Math.tanh(sample * 1.05) * edgeFade;
+    v.setInt16(44 + i*2, Math.round(Math.max(-1, Math.min(1,sample))*32767), true);
   }
   return new Blob([buffer], {type:'audio/wav'});
 }
@@ -634,6 +746,7 @@ function getMusicAudio() {
     audio.playsInline = true;
     audio.setAttribute('playsinline','');
     audio.volume = 0.75; // iOSでは音量がOS管理になることがあります
+    audio.addEventListener('timeupdate', keepMusicInCurrentTheme);
     musicAudio = audio;
     return audio;
   } catch(e) {
@@ -641,19 +754,35 @@ function getMusicAudio() {
     return null;
   }
 }
-// タイマーの実残時間からフェーズを決め、iPhoneの同じ <audio> を
-// playbackRate だけ変えて再生する。音声のsrc交換・再生し直しはしない。
+// 1つのaudioを再生したまま、残り50%で別メロディー区間へジャンプ。
+// 再生の区間ループは timeupdate と tick で維持（iOSの追加play()制限を回避）。
 function getMusicPhase() {
   if (totalMs <= 0) return 0;
   const fraction = remainMs / totalMs;
   return fraction <= 0.2 ? 2 : fraction <= 0.5 ? 1 : 0;
 }
+function keepMusicInCurrentTheme() {
+  if (!musicAudio || (!running && !musicPreviewing) || musicAudio.paused) return;
+  const phase = Math.max(0, currentMusicPhase);
+  const start = MUSIC_PHASE_STARTS[phase], end = MUSIC_PHASE_ENDS[phase];
+  const t = musicAudio.currentTime;
+  if (typeof t !== 'number' || !Number.isFinite(t)) return;
+  if (t >= end - 0.035 || t < start - 0.035) {
+    try { musicAudio.currentTime = start; } catch(e) {}
+  }
+}
 function updateMusicPhase() {
   const phase = getMusicPhase();
   if (phase === currentMusicPhase) return;
+  const previousPhase = currentMusicPhase;
   currentMusicPhase = phase;
   if (musicAudio) {
-    try { musicAudio.playbackRate = MUSIC_RATES[phase]; } catch(e) {}
+    try {
+      musicAudio.playbackRate = MUSIC_RATES[phase];
+      if (previousPhase === -1 || (previousPhase === 0) !== (phase === 0)) {
+        musicAudio.currentTime = MUSIC_PHASE_STARTS[phase];
+      }
+    } catch(e) {}
   }
   const pace = document.getElementById('musicPace');
   if (pace) {
@@ -667,7 +796,7 @@ function startMusic() {
   if (!a) return;
   currentMusicPhase = -1;
   if (running) updateMusicPhase();
-  else { a.playbackRate = MUSIC_RATES[0]; }
+  else { a.playbackRate = MUSIC_RATES[0]; a.currentTime = MUSIC_PHASE_STARTS[0]; }
   const requestId = ++musicRequestId;
   a.volume = 0.75;
   // Safariではplay()をユーザー操作から直接呼ぶことが必要
@@ -810,12 +939,13 @@ function unlockAll() {
 function selectRoute(idx) {
   routeIdx = idx;
   document.querySelectorAll('.route-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
-  document.body.classList.remove('shinkansen','chuo','azusa','tohoku','hokuriku');
+  document.body.classList.remove('shinkansen','chuo','azusa','tohoku','hokuriku','yamanote');
   if (idx===1) document.body.classList.add('shinkansen');
   else if (idx===2) document.body.classList.add('chuo');
   else if (idx===3) document.body.classList.add('azusa');
   else if (idx===4) document.body.classList.add('tohoku');
   else if (idx===5) document.body.classList.add('hokuriku');
+  else if (idx===6) document.body.classList.add('yamanote');
   const r = ROUTES[idx];
   document.getElementById('lineBadge').textContent   = r.badge;
   document.getElementById('headerTitle').textContent = r.title;
@@ -953,6 +1083,7 @@ function tick() {
   }
 
   updateMusicPhase();
+  keepMusicInCurrentTheme();
   renderDisplay();
   if (remainMs <= 0) { finish(); }
 }
