@@ -19,7 +19,7 @@ test('preview changes only the BGM ducking volume and test-version labels', () =
   assert.equal(
     preview
       .replace('<title>あそびタイマー🚃｜音量調整テスト版</title>', '<title>あそびタイマー🚃</title>')
-      .replace(label, '')
+      .replace(label, ''),
     production,
     'no route, speech voice/rate/pitch, playback or UI changes beyond the preview label'
   );
