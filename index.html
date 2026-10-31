@@ -913,7 +913,7 @@ function stopMusic() {
 function duckMusic(isSpeaking) {
   if (!musicAudio || musicAudio.paused) return;
   // iPhoneではvolume設定が無視される場合があります。その際は端末の音量を使用
-  try { musicAudio.volume = isSpeaking ? 0.32 : 0.75; } catch(e) {}
+  try { musicAudio.volume = isSpeaking ? 0.10 : 0.75; } catch(e) {}
 }
 function handleMusic() {
   musicOn = !musicOn;

@@ -242,7 +242,7 @@ test('BGM starts, stops and resumes alongside timer, even after a silent-mode op
   assert.equal(mediaElements.length,1);
   assert.equal(mediaElements[0].playCount,1);
   run('duckMusic(true)');
-  assert.equal(mediaElements[0].volume, 0.32);
+  assert.equal(mediaElements[0].volume, 0.10);
   run('duckMusic(false)');
   assert.equal(mediaElements[0].volume, 0.75);
   run('handleStart()'); // pause
