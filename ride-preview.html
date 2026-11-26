@@ -356,7 +356,7 @@ body > .dir-row { order: 5; width: 100%; max-width: 560px; display: grid; grid-t
 /* 路線ボタンの並びと追加路線の色 */
 body.komachi { --accent: #ff5a6e; }
 body.enoden { --accent: #4fb878; }
-#rb0{order:1}#rb1{order:2}#rb2{order:3}#rb3{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb6{order:8;grid-column:auto}#rb8{order:9;grid-column:1/-1}
+#rb0{order:1}#rb1{order:2}#rb2{order:3}#rb3{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb6{order:8;grid-column:auto}#rb8{order:9}
 /* さらに引いた映像 */
 .scene { height: clamp(188px, 31svh, 206px); }
 .layer.far, .layer.mid, .layer.front { width: 225%; animation-name: scroll3; }
@@ -392,11 +392,24 @@ body.enoden { --accent: #4fb878; }
 .map-long { position: absolute; top: 24px; height: 10px; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 21px, rgba(255,255,255,.95) 21px 25px); }
 .map-long span { position: absolute; left: 50%; top: 20px; transform: translateX(-50%); white-space: nowrap; font-size: 10px; font-weight: 900; color: #4a5168; background: #e7e9f0; border-radius: 10px; padding: 3px 8px; }
 .map-long::after { content: ''; position: absolute; left: 30px; right: 30px; top: 48px; border-top: 3px dotted #c3c7d4; }
+/* ボタンは大人が操作するので、小さく並べる */
+body > .route-selector { grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 8px; }
+body .route-selector .route-btn { grid-column: auto; min-height: 40px; padding: 4px 1px; font-size: 12px; line-height: 1.3; border-radius: 8px; white-space: nowrap; }
+.route-selector .route-btn small { font-size: 9.5px; }
+#rb0{order:1}#rb2{order:2}#rb6{order:3}#rb1{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb3{order:8}#rb8{order:9}
+body > .dir-row { gap: 5px; margin: 0 0 6px; }
+.dir-row .route-btn-dir { min-height: 36px; padding: 4px 2px; font-size: 13px; line-height: 1.3; border-radius: 8px; white-space: nowrap; }
+.dir-row .route-btn-dir small { display: inline; margin-left: 6px; font-size: 10px; }
+body .controls .btn-row { gap: 6px; }
+body .controls .btn { min-height: 38px; padding: 7px; font-size: 14px; border-radius: 9px; }
+body .sound-controls { gap: 5px; margin-bottom: 6px; }
+body .btn-announce { min-height: 36px; padding: 6px; font-size: 12px; border-radius: 8px; }
+body .btn-audio-test { min-height: 34px; padding: 5px 10px; font-size: 12px; }
 </style>
 </head>
 <body>
 
-<div class="preview-label">【テスト版19】音楽が鳴らない対策</div>
+<div class="preview-label">【テスト版20】小さいボタンと かがやき</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -407,8 +420,8 @@ body.enoden { --accent: #4fb878; }
   <button class="route-btn"        id="rb2" onclick="selectRoute(2)">🟠 中央線<br><small>高尾→東京</small></button>
   <button class="route-btn"        id="rb3" onclick="selectRoute(3)">🚆 あずさ<br><small>松本→新宿</small></button>
   <button class="route-btn"        id="rb4" onclick="selectRoute(4)">🚄 はやぶさ<br><small>東京→新青森</small></button>
-  <button class="route-btn"        id="rb5" onclick="selectRoute(5)">🚄 北陸新幹線<br><small>東京→敦賀</small></button>
-  <button class="route-btn"        id="rb6" onclick="selectRoute(6)">🟢 山手線（外回り）<br><small>東京→東京・一周</small></button>
+  <button class="route-btn"        id="rb5" onclick="selectRoute(5)">🚄 かがやき<br><small>東京→敦賀</small></button>
+  <button class="route-btn"        id="rb6" onclick="selectRoute(6)">🟢 山手線<br><small>外回り・一周</small></button>
   <button class="route-btn"        id="rb7" onclick="selectRoute(7)">🚄 こまち<br><small>東京→秋田</small></button>
   <button class="route-btn"        id="rb8" onclick="selectRoute(8)">🚋 江ノ電<br><small>藤沢→鎌倉</small></button>
 </div>
@@ -623,35 +636,20 @@ const ROUTES = [
     ]
   },
   {
-    badge:'JR 北陸新幹線（東京発）', title:'🚄 東京 → 敦賀 あそびタイマー',
-    sub:'北陸新幹線で敦賀まで、ぜんぶの駅をめぐろう！', icon:'🚄', from:'東京', to:'敦賀',
+    badge:'JR 北陸新幹線 かがやき（東京発）', title:'🚄 東京 → 敦賀 あそびタイマー',
+    sub:'かがやきが敦賀についたら あそびおわり', icon:'🚄', from:'東京', to:'敦賀',
     endIcon:'🌊', endTitle:'🚄 敦賀に到着！', whistle:'shinkansen',
-    allStations:true,
     stations:[
        {name:"東京", ruby:"とうきょう", num:'HK01', ms:'key'},
        {name:"上野", ruby:"うえの", num:'HK02', ms:null},
        {name:"大宮", ruby:"おおみや", num:'HK03', ms:'key'},
-       {name:"熊谷", ruby:"くまがや", num:'HK04', ms:null},
-       {name:"本庄早稲田", ruby:"ほんじょうわせだ", num:'HK05', ms:null},
-       {name:"高崎", ruby:"たかさき", num:'HK06', ms:'key'},
-       {name:"安中榛名", ruby:"あんなかはるな", num:'HK07', ms:null},
-       {name:"軽井沢", ruby:"かるいざわ", num:'HK08', ms:'key'},
-       {name:"佐久平", ruby:"さくだいら", num:'HK09', ms:null},
-       {name:"上田", ruby:"うえだ", num:'HK10', ms:null},
-       {name:"長野", ruby:"ながの", num:'HK11', ms:'key'},
-       {name:"飯山", ruby:"いいやま", num:'HK12', ms:null},
-       {name:"上越妙高", ruby:"じょうえつみょうこう", num:'HK13', ms:'key'},
-       {name:"糸魚川", ruby:"いといがわ", num:'HK14', ms:null},
-       {name:"黒部宇奈月温泉", ruby:"くろべうなづきおんせん", num:'HK15', ms:null},
-       {name:"富山", ruby:"とやま", num:'HK16', ms:'key'},
-       {name:"新高岡", ruby:"しんたかおか", num:'HK17', ms:null},
-       {name:"金沢", ruby:"かなざわ", num:'HK18', ms:'key'},
-       {name:"小松", ruby:"こまつ", num:'HK19', ms:null},
-       {name:"加賀温泉", ruby:"かがおんせん", num:'HK20', ms:null},
-       {name:"芦原温泉", ruby:"あわらおんせん", num:'HK21', ms:null},
-       {name:"福井", ruby:"ふくい", num:'HK22', ms:'key'},
-       {name:"越前たけふ", ruby:"えちぜんたけふ", num:'HK23', ms:null},
-       {name:"敦賀", ruby:"つるが", num:'HK24', ms:'key'}
+       {name:"長野", ruby:"ながの", num:'HK04', ms:'key'},
+       {name:"富山", ruby:"とやま", num:'HK05', ms:'key'},
+       {name:"金沢", ruby:"かなざわ", num:'HK06', ms:'key'},
+       {name:"小松", ruby:"こまつ", num:'HK07', ms:null},
+       {name:"福井", ruby:"ふくい", num:'HK08', ms:'key'},
+       {name:"越前たけふ", ruby:"えちぜんたけふ", num:'HK09', ms:null},
+       {name:"敦賀", ruby:"つるが", num:'HK10', ms:'key'},
     ]
   }
   ,{
@@ -1503,7 +1501,7 @@ const SEG_MINUTES = [
   [3,3,4,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,5,5,4,2],
   [9,10,8,6,17,15,12,9,5,20,30,9,12,13],
   [5,19,13,9,12,8,10,12,10,12,11,6,8,8,7,6,11,11,11,13,11,13],
-  [5,19,13,9,8,8,10,8,9,12,11,12,13,14,11,9,13,10,9,9,9,8,12],
+  [5,19,56,47,20,12,17,10,12],
   [2,2,2,2,2,2,2,2,2,2,3,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
   [5,19,13,9,12,8,10,12,10,12,11,6,8,8,7,6,11,12,22,15,12,31],
   [2,2,2,2,3,3,3,2,4,3,3,2,1,2],
@@ -1602,7 +1600,7 @@ const kana = st => `<ruby>${st.name}<rt>${st.ruby}</rt></ruby>`;
 // 進行バーに出す途中の主要駅（路線ごとに、重ならない3駅）
 const BAR_STATIONS = [
   ['新宿','秋葉原','船橋'], ['広島','新大阪','名古屋'], ['立川','三鷹','新宿'], ['上諏訪','甲府','八王子'],
-  ['宇都宮','仙台','盛岡'], ['高崎','長野','金沢'], ['品川','新宿','上野'], ['仙台','盛岡','大曲'], ['江ノ島','鎌倉高校前','長谷'],
+  ['宇都宮','仙台','盛岡'], ['長野','金沢','福井'], ['品川','新宿','上野'], ['仙台','盛岡','大曲'], ['江ノ島','鎌倉高校前','長谷'],
 ];
 let barPoints = [];
 function buildBar() {
@@ -1724,7 +1722,6 @@ function renderDirection() {
     btn.innerHTML = `${DIR_NAMES[idx][dir]}<small>${where}</small>`;
     btn.classList.toggle('active', dir === routeDir[idx]);
     btn.setAttribute('aria-pressed', String(dir === routeDir[idx]));
-    addFurigana(btn);
   });
 }
 function selectDirection(slot) {
@@ -1734,9 +1731,8 @@ function selectDirection(slot) {
   ROUTES[idx] = dir ? reversedRoute(idx) : {...FORWARD_ROUTES[idx]};
   const button = document.querySelectorAll('.route-btn')[idx];
   if (button && button.querySelector) {
-    if (idx === 6) button.innerHTML = `🟢 山手線（${dir ? '内回り' : '外回り'}）<br><small>東京→東京・一周</small>`;
+    if (idx === 6) button.innerHTML = `🟢 山手線<br><small>${dir ? '内回り' : '外回り'}・一周</small>`;
     else button.querySelector('small').textContent = ROUTES[idx].from + '→' + ROUTES[idx].to;
-    addFurigana(button);
   }
   selectRoute(idx);
   window.scrollTo && window.scrollTo({top:0, behavior:'smooth'});
@@ -1756,7 +1752,7 @@ const ROUTE_LAND = [
   // 東北新幹線: 東京→新青森
   ['tokyo','city','rural','rural','rural','mountain','rural','mountain','mountain','rural','rural','rural','rural','rural','rural','rural','alps','mountain','mountain','mountain','rural','alps'],
   // 北陸新幹線: 東京→敦賀
-  ['tokyo','city','town','rural','rural','mountain','mountain','alps','mountain','mountain','rural','alps','sea','sea','alps','rural','rural','sea','rural','rural','rural','rural','mountain'],
+  ['tokyo','city','mountain','alps','rural','sea','rural','rural','mountain'],
   // 山手線
   spread(['tokyo',12],['park',2],['tokyo',11],['park',1],['tokyo',4]),
   // こまち: 東京→秋田（盛岡までは はやぶさと同じ）
@@ -1778,6 +1774,11 @@ function landAt(pos) {
   if (routeIdx === 1 && forwardSeg(seg) === 8) {
     const f = routeDir[routeIdx] ? 1 - (pos - seg) : pos - seg; // 名古屋側を0とする
     return f < .25 ? 'town' : f < .45 ? 'lake' : f < .58 ? 'orchard' : f < .8 ? 'fuji' : 'sea';
+  }
+  if (routeIdx === 5 && (forwardSeg(seg) === 2 || forwardSeg(seg) === 3)) { // かがやきの長い区間は途中で景色を変える
+    const f = routeDir[routeIdx] ? 1 - (pos - seg) : pos - seg; // 東京側を0とする
+    return forwardSeg(seg) === 2 ? (f < .3 ? 'town' : f < .6 ? 'rural' : f < .8 ? 'mountain' : 'alps')
+      : (f < .35 ? 'mountain' : f < .55 ? 'alps' : f < .8 ? 'sea' : 'rural');
   }
   return lands[routeDir[routeIdx] ? lands.length-1-seg : seg]; // 逆向きは区間の順も逆
 }
@@ -2124,7 +2125,7 @@ function showToast(msg) {
 // ============================================================
 selectRoute(0);
 initSeek();
-document.querySelectorAll('.route-btn, .alert, .audio-hint, .btn-audio-test').forEach(addFurigana);
+document.querySelectorAll('.alert, .audio-hint').forEach(addFurigana);
 loadBGMerBundle();
 </script>
 </body>
