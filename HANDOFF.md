@@ -9,17 +9,21 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**v15 の内容**）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=25 ＝ `ride-preview.html`（v25）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=26 ＝ `ride-preview.html`（v26）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
 - 全9路線・両方向の348文を VOICEVOX:四国めたん（ノーマル style 2）で作成済み（`assets/voice/metan/`）
 - `manifest.json` の `routes` に路線ごとの文の一覧があり、画面は選んだ路線の分だけ読み込む
-- 誤読を直したもの: ハチノヘ・ニノヘ・シチノヘトワダ（「ヘ」が「エ」になっていた。読みのカナを直して作成）
+- 読み・アクセントの直し（`scripts/fix-voice-reading.py`。build-voice.py の後に毎回実行する）
+  - 誤読: ハチノヘ・ニノヘ・シチノヘトワダ（「ヘ」が「エ」になっていた）
+  - 利用者の希望で平らなイントネーション（平板）: 三鷹・吉祥寺（v26。3案を聞き比べてもらい選ばれた）
+  - 直した音声は新しいファイル名（k〜.m4a）にして、端末に古い音声が残らないようにしている
 - 文を変えたら作り直す手順:
   1. `python3 scripts/collect-voice-texts.py /tmp/texts.json`（python の playwright が必要。入っていない環境では `chromium.launch(executable_path='/opt/pw-browsers/chromium')` に変えた複製で動かした）
   2. VOICEVOX を準備（下記）し、`python3 scripts/build-voice.py /tmp/texts.json <ONNX Runtimeのso> <辞書フォルダ> <0.vvm>`
-  3. 出力される読み（カナ）を確認し、駅名の誤読がないか見る
+  3. `python3 scripts/fix-voice-reading.py <ONNX Runtimeのso> <辞書フォルダ> <0.vvm>`
+  4. 出力される読み（カナ）を確認し、駅名の誤読がないか見る
 
 注意: `speakText` は文が manifest と一字一句一致するときだけ録音を流し、なければ端末の読み上げになる。アナウンス文や駅名を変えたら音声の作り直しが必要。
 
@@ -42,16 +46,16 @@ sed -i "s/assert.equal(routes\[5\].n, 24);/assert.equal(routes[5].n, 10);/; s/as
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
 
-## テスト版にあって本番にない変更（v16〜v25）
+## テスト版にあって本番にない変更（v16〜v26）
 - 発車音はドアの「プシュー」だけ／iPhoneの音声設定（audioSession）
 - ボタンを小型化、北陸新幹線→かがやき、はやぶさ終点を新函館北斗
 - 電車の窓が消える不具合の修正（**本番には残っている**）
 - BGM を小さくした v3（`assets/music/bgmer-train-timer-v3.*`）。アナウンス中の音量切り替えは廃止（BGMは常に同じ音量）
 - 描画を軽くした（景色は画像化、車輪の回転は停止）／画面ロック防止の取り直しと状態表示
-- 全路線の録音アナウンス（v24で山手線、v25で全路線）
+- 全路線の録音アナウンス（v24で山手線、v25で全路線、v26で三鷹・吉祥寺のイントネーション）
 
 ## 未確認・未決
-- iPhone実機: 引っかかりは録音の声（山手線）で良くなったとの回答。全路線版（v25）は未確認。画面ロック防止の効きは回答なし（低電力モードでは効かない可能性）
+- iPhone実機: 引っかかりは録音の声（山手線）で良くなったとの回答。全路線版（v25〜）は未確認。画面ロック防止の効きは回答なし（低電力モードでは効かない可能性）
 - アナウンス中だけBGMを下げるか: 「同じ音量か」と質問があり現状を説明済み。希望は未回答
 - はやぶさ／こまちは実際の停車駅ではなく全駅表示。所要時間は概算
 
