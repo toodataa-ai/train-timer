@@ -396,7 +396,7 @@ body.enoden { --accent: #4fb878; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版16】リアルな発車音</div>
+<div class="preview-label">【テスト版17】発車はドアの音だけ</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -829,11 +829,9 @@ function resumeActx() {
   if (c && c.state !== 'running') c.resume();
 }
 
-// 発車の音は録音を使わず、その場で合成する（実際の駅の発車メロディーはまねしない）
-// kind: 'train' = 電車、'shinkansen' = 新幹線・特急
-function scheduleDeparture(c, out, kind, t0) {
-  const fast = kind === 'shinkansen';
-  const env = (peak, s, d, attack = 0.02, release = 0.08) => {
+// 発車の音は、ドアが閉まる「プシュー、ドン」だけ。録音は使わず、その場で合成する
+function scheduleDeparture(c, out, t0) {
+  const env = (peak, s, d, attack, release) => {
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, s);
     g.gain.linearRampToValueAtTime(peak, s + attack);
@@ -842,15 +840,9 @@ function scheduleDeparture(c, out, kind, t0) {
     g.connect(out);
     return g;
   };
-  const tone = (type, freq, s, d, dest, endFreq) => {
-    const o = c.createOscillator();
-    o.type = type; o.frequency.setValueAtTime(freq, s);
-    if (endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, s + d);
-    o.connect(dest); o.start(s); o.stop(s + d + 0.05);
-  };
-  const filter = (type, freq, q, dest) => {
+  const filter = (type, freq, dest) => {
     const f = c.createBiquadFilter();
-    f.type = type; f.frequency.value = freq; f.Q.value = q; f.connect(dest);
+    f.type = type; f.frequency.value = freq; f.Q.value = 0.7; f.connect(dest);
     return f;
   };
   const buffer = c.createBuffer(1, c.sampleRate, c.sampleRate);
@@ -860,42 +852,14 @@ function scheduleDeparture(c, out, kind, t0) {
     const n = c.createBufferSource();
     n.buffer = buffer; n.loop = true; n.connect(dest); n.start(s); n.stop(s + d + 0.02);
   };
-  // 1. 発車ベル「ジリリリリ」: 金属の鐘を速くたたく
-  const ring = c.createGain(); ring.gain.value = 1; ring.connect(out);
-  for (let k = 0; k < 28; k++) {
-    const s = t0 + k * 0.045;
-    const hit = c.createGain();
-    hit.gain.setValueAtTime(0.0001, s);
-    hit.gain.linearRampToValueAtTime(0.11, s + 0.004);
-    hit.gain.exponentialRampToValueAtTime(0.012, s + 0.044);
-    hit.gain.linearRampToValueAtTime(0.0001, s + (k === 27 ? 0.3 : 0.05));
-    hit.connect(ring);
-    (fast ? [1245, 1867, 2637, 3729] : [987, 1480, 2217, 3135]).forEach(f => tone('sine', f, s, k === 27 ? 0.3 : 0.05, hit));
-  }
-  // 2. ドアが閉まる「プシュー、ドン」
-  let t = t0 + 1.55;
-  noise(t, 0.6, filter('highpass', 2200, 0.7, env(0.22, t, 0.6, 0.04, 0.45)));
-  tone('sine', 140, t + 0.52, 0.18, env(0.45, t + 0.52, 0.18, 0.005, 0.15), 55);
-  noise(t + 0.52, 0.07, filter('lowpass', 700, 0.7, env(0.35, t + 0.52, 0.07, 0.003, 0.05)));
-  t += 0.85;
-  // 3. 電車は短い警笛「ファーン」
-  if (!fast) {
-    const horn = filter('lowpass', 1800, 0.8, env(0.13, t, 0.65, 0.04, 0.2));
-    [370, 372.5, 466, 469].forEach(f => tone('sawtooth', f, t, 0.65, horn));
-    t += 0.75;
-  }
-  // 4. モーターの音がだんだん高くなる
-  const len = fast ? 2.8 : 2.2;
-  const motor = filter('lowpass', 2400, 0.6, env(fast ? 0.1 : 0.08, t, len, 0.5, 0.8));
-  tone('sawtooth', fast ? 95 : 130, t, len, motor, fast ? 620 : 520);
-  tone('triangle', fast ? 380 : 260, t, len, motor, fast ? 1650 : 980);
-  noise(t, len, filter('lowpass', fast ? 600 : 400, 0.5, env(0.12, t, len, 0.9, 0.7)));
-  // 5. 電車は「ガタン ゴトン」が少しずつ速くなる
-  if (!fast) {
-    [0.35, 0.5, 1.15, 1.28, 1.75, 1.86].forEach((at, i) => {
-      noise(t + at, 0.08, filter('bandpass', i % 2 ? 260 : 380, 1.2, env(0.55, t + at, 0.08, 0.003, 0.065)));
-    });
-  }
+  // プシュー
+  noise(t0, 0.75, filter('highpass', 1800, env(0.7, t0, 0.75, 0.04, 0.5)));
+  // ドン
+  const t = t0 + 0.65;
+  const o = c.createOscillator();
+  o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.28);
+  o.connect(env(0.95, t, 0.28, 0.005, 0.23)); o.start(t); o.stop(t + 0.33);
+  noise(t, 0.1, filter('lowpass', 900, env(0.9, t, 0.1, 0.003, 0.07)));
 }
 
 let departureOut = null;
@@ -907,9 +871,9 @@ function playWhistle() {
   stopDeparture();
   try {
     departureOut = c.createGain();
-    departureOut.gain.value = 0.9;
+    departureOut.gain.value = 1;
     departureOut.connect(c.destination);
-    scheduleDeparture(c, departureOut, ROUTES[routeIdx].whistle, c.currentTime + 0.05);
+    scheduleDeparture(c, departureOut, c.currentTime + 0.05);
   } catch(e){}
 }
 
@@ -1965,7 +1929,7 @@ function handleStart() {
       if (announceOn && st1) {
         queueAnnouncement(function(){
           if (running) speakText(st0.name + 'を発車しました。次は' + st1.name + 'です！');
-        }, ROUTES[routeIdx].whistle === 'train' ? 5600 : 5400); // 発車の音が終わってから
+        }, 1400); // ドアの音が終わってから
       }
     }
     renderDisplay();
