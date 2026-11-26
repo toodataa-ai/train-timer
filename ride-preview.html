@@ -385,6 +385,11 @@ body.enoden { --accent: #4fb878; }
   padding: 4px 12px; text-align: center; box-shadow: 0 3px 12px rgba(0,0,0,.25); }
 .arrive-chip b { display: block; font-size: 14px; }
 .arrive-chip[hidden] { display: none; }
+/* 「半分すぎたよ」などの注意も景色の下に浮かせる（出ても画面全体がずれないように） */
+.scene .alert { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); z-index: 7; width: max-content; max-width: 94%;
+  margin: 0; padding: 4px 12px; font-size: 12px; border-radius: 10px; box-shadow: 0 3px 12px rgba(0,0,0,.3); }
+.scene .alert-orange { background: rgba(40,26,12,.92); }
+.scene .alert-red { background: rgba(48,12,20,.92); }
 @media (max-height: 600px) { .scene { height: 188px; } }
 .speedlines { position: absolute; left: 0; right: 0; bottom: 52px; height: 50px; z-index: 2; opacity: 0; pointer-events: none; background: repeating-linear-gradient(180deg, transparent 0 11px, rgba(255,255,255,.75) 11px 12px, transparent 12px 17px); -webkit-mask-image: repeating-linear-gradient(90deg, transparent 0 30px, #000 80px, transparent 130px); mask-image: repeating-linear-gradient(90deg, transparent 0 30px, #000 80px, transparent 130px); -webkit-mask-size: 130px 100%; mask-size: 130px 100%; animation: rush .22s linear infinite; animation-play-state: paused; }
 .ride.moving .scene[data-fast="1"] .speedlines { opacity: .8; animation-play-state: running; }
@@ -420,13 +425,13 @@ body > .wake-panel { position: fixed; top: calc(6px + env(safe-area-inset-top));
   z-index: 60; width: max-content; max-width: min(92vw, 520px); margin: 0; padding: 4px 12px; font-size: 11px;
   border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.35); opacity: 1; transition: opacity .6s; pointer-events: none; }
 body > .wake-panel #wakeRetry { pointer-events: auto; padding: 4px 8px; }
-body > .wake-panel.fade { opacity: 0; }
+body > .wake-panel.fade { opacity: 0; visibility: hidden; transition: opacity .6s, visibility 0s .6s; }
 body > .wake-panel[hidden] { display: none; }
 </style>
 </head>
 <body>
 
-<div class="preview-label">【テスト版31】終点で駅に停車（別画面にしない）・「到着しました」のアナウンス</div>
+<div class="preview-label">【テスト版32】終点で駅に停車・「到着しました」のアナウンス・注意の表示で画面がずれないように</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -520,6 +525,8 @@ body > .wake-panel[hidden] { display: none; }
     <div class="world" id="world"></div>
     <div class="hud"><div><small>まえの えき</small><b id="signFrom"></b></div><div><small id="signToLabel">つぎは</small><b id="signTo"></b></div></div>
     <div class="arrive-chip" id="arriveChip" hidden><b id="arriveTitle"></b></div>
+    <div class="alert alert-orange" id="alertOrange">⚠️ 半分すぎたよ！そろそろかたづけの準備して！</div>
+    <div class="alert alert-red"    id="alertRed">🚨 もうすぐ到着！あそびはもうおわりだよ！！</div>
     <div class="speedlines"></div>
     <div class="couple-chip" id="coupleChip" hidden></div>
     <div class="train-track"><div class="train" id="partnerTrain" hidden><svg id="partnerSvg" viewBox="0 -9 450 72"></svg></div><div class="train" id="rideTrain">
@@ -529,8 +536,6 @@ body > .wake-panel[hidden] { display: none; }
   <div class="map-view" id="mapView"><div class="map-line" id="mapLine"></div></div>
 </div>
 
-<div class="alert alert-orange" id="alertOrange">⚠️ 半分すぎたよ！そろそろかたづけの準備して！</div>
-<div class="alert alert-red"    id="alertRed">🚨 もうすぐ到着！あそびはもうおわりだよ！！</div>
 
 <div class="track-outer">
   <div class="track-header"><span>🗺 路線図</span><span id="currentStation">— 停車中 —</span></div>
@@ -753,13 +758,14 @@ function setWakeStatus(state, explanation = '') {
     background: 'アプリが表示されていないため、画面ロック防止を一時解除しています。'
   };
   el.textContent = (messages[state] || '') + (explanation ? ' (' + explanation + ')' : '');
-  // 時計にかぶらないよう、表示は数秒で消す（「有効」は3秒、注意は8秒。再試行ボタンがあるときは残す）
+  // 時計にかぶらないよう、表示は数秒で消す（「有効」は3秒、注意は8秒）
   clearTimeout(setWakeStatus.fadeTimer);
   panel.classList.remove('fade');
   retry.hidden = !(screenWakeDesired && (state === 'failed' || state === 'released') &&
     typeof navigator !== 'undefined' && navigator.wakeLock &&
     typeof navigator.wakeLock.request === 'function');
-  if (retry.hidden) setWakeStatus.fadeTimer = setTimeout(() => panel.classList.add('fade'), state === 'active' || state === 'idle' ? 3000 : 8000);
+  // 再試行ボタンがあっても消す（画面に触れるたびに自動で取り直すため）
+  setWakeStatus.fadeTimer = setTimeout(() => panel.classList.add('fade'), state === 'active' || state === 'idle' ? 3000 : 8000);
 }
 
 function retryScreenWakeLock() {
