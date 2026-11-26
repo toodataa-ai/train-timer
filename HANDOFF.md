@@ -9,7 +9,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**v15 の内容**）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=34 ＝ `ride-preview.html`（v34）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=35 ＝ `ride-preview.html`（v35）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -51,14 +51,14 @@ sed -i "s/assert.equal(routes\[5\].n, 24);/assert.equal(routes[5].n, 10);/; s/as
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
 
-## テスト版にあって本番にない変更（v16〜v34）
+## テスト版にあって本番にない変更（v16〜v35）
 - 発車音はドアの「プシュー」だけ／iPhoneの音声設定（audioSession）
 - ボタンを小型化、北陸新幹線→かがやき、はやぶさ終点を新函館北斗
 - 電車の窓が消える不具合の修正（**本番には残っている**）
 - BGM を小さくした v3（`assets/music/bgmer-train-timer-v3.*`）。アナウンス中の音量切り替えは廃止（BGMは常に同じ音量）
 - 描画を軽くした（景色は画像化、車輪の回転は停止）／画面ロック防止の取り直しと状態表示（v30から画面上部に浮かせて表示し、数秒で消える。表示が出ても画面がずれない）
 - 「半分すぎたよ」「もうすぐ到着」の注意は景色（.scene）の下に浮かせて表示し、出ても画面がずれない。画面ロック防止の表示は再試行ボタンがあっても8秒で消える（画面に触れるたびに自動で取り直すため）（v32）
-- のぞみの絵を8両から5両に（長すぎたため。`carCount`）（v34）
+- 電車の両数（`carCount`）: のぞみ・かがやきは5両（v34〜35。のぞみは8両から）、江ノ電は2両（v35）、ほかは4両。はやぶさ4両＋こまち3両の連結はそのまま
 - 終点に着いても別画面（overlay）を出さず、電車を終点に止めたまま景色の下に到着の札を出す。開始ボタンは「🔄 もういちど」でリセット。終点の案内は「終点、〇〇に到着しました。」、旅の時間は「今回の旅は、N分でした。よく頑張ったね！」（`tripEndText`）（v31）
 - 全路線の録音アナウンス（v24で山手線、v25で全路線、v26〜27で三鷹・吉祥寺・高円寺のイントネーション、v28で全駅名を標準アクセントに）
 
