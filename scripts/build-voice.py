@@ -18,7 +18,8 @@ made = 0
 with tempfile.TemporaryDirectory() as tmp:
     wav = pathlib.Path(tmp) / 'v.wav'
     for text in texts:
-        name = hashlib.sha1(text.encode()).hexdigest()[:12] + '.m4a'
+        # 既に一覧にある文（読みを直して名前が変わったものも含む）は作り直さない
+        name = manifest['clips'].get(text) or hashlib.sha1(text.encode()).hexdigest()[:12] + '.m4a'
         if not (out / name).exists():
             query = syn.create_audio_query(text, 2)
             print(text, '|', query.kana)  # 読みの確認用
@@ -29,6 +30,10 @@ with tempfile.TemporaryDirectory() as tmp:
             made += 1
         manifest['clips'][text] = name
 # 路線ごとの文の一覧（画面は選んだ路線の分だけ読み込む）
-manifest.setdefault('routes', {}).update(by_route)
+manifest['routes'] = by_route
+# 使わなくなった文（アナウンスの文を変えたとき）は一覧とファイルから外す
+for text in [t for t in manifest['clips'] if t not in texts]:
+    name = manifest['clips'].pop(text)
+    if name not in manifest['clips'].values(): (out / name).unlink(missing_ok=True)
 manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding='utf-8')
 print('made', made, 'total', len(manifest['clips']))

@@ -60,6 +60,12 @@ def dict_kana(text):
     if not use: return base
     k = syn.create_audio_query(swap(text, use), 2).kana
     return k if pron(k) == pron(base) else base
+# 「今回の旅は、45分でした」の「45分」を一つのまとまりで読む（ヨ'ンジュウ/ゴ'フン → ヨンジュウゴ'フン）
+def fix_minutes(kana):
+    def one(m):
+        num = m.group(1).replace("'", '').replace('/', '')  # 例: ヨンジュウゴフン
+        return '、' + num[:-2] + "'" + num[-2:] + 'デ_シタ、'
+    return re.sub(r"、([^、]*?[フプ]ン)デ_シタ、", one, kana)
 with tempfile.TemporaryDirectory() as tmp:
     wav = pathlib.Path(tmp) / 'v.wav'
     for text, old in list(manifest['clips'].items()):
@@ -68,6 +74,7 @@ with tempfile.TemporaryDirectory() as tmp:
         for w in hits:
             for a, b in KANA_FIX[w]: kana = kana.replace(a, b)
         kana = set_accent(kana)
+        kana = fix_minutes(kana)
         name = 'k' + hashlib.sha1(kana.encode()).hexdigest()[:11] + '.m4a'
         if name == old and (out / name).exists(): continue
         print(text, '|', kana, '|', name)

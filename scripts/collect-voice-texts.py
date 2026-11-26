@@ -15,7 +15,7 @@ JS = """routes => { const out = {};
       const keep = speakText; speakText = t => set.add(toSpeechText(t)); announceOn = true;
       for (let i = 1; i < N; i++) onStationReached(i);
       speakText = keep;
-      for (const m of STEPS) if (m) set.add(toSpeechText('こんかいの旅は、' + m + 'ふんでした。よくがんばったね！'));
+      for (const m of STEPS) if (m) set.add(toSpeechText(tripEndText(m)));
     }
     out[r] = [...set];
   }

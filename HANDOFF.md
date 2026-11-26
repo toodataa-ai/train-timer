@@ -9,7 +9,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**v15 の内容**）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=30 ＝ `ride-preview.html`（v30）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=31 ＝ `ride-preview.html`（v31）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -21,6 +21,7 @@
   - 誤読: ハチノヘ・ニノヘ・シチノヘトワダ（「ヘ」が「エ」になっていた）
   - 利用者の希望のイントネーション（3案を聞き比べてもらい選ばれた）: 三鷹・吉祥寺は平ら（平板、v26）、高円寺は最初が高い「コ↓ーエンジ」（頭高、v27）、国立は平ら（v30）
   - 駅名のアクセントは辞書の標準アクセント（v28）: 文中の駅名を漢字にして VOICEVOX に渡したときのアクセントを使い、読みはカタカナのまま。漢字だと読みが変わる駅（国立・北上・長谷・西千葉・水沢江刺の文中など）は従来のまま
+  - 「今回の旅は、N分でした」は「N分」を一つのまとまりで読む（fix-voice-reading.py の fix_minutes、v31）
   - 新しい希望は聞き比べ用の音声（今の読み・平ら・頭高など）を作って送り、選んでもらう
   - 直した音声は新しいファイル名（k〜.m4a）にして、端末に古い音声が残らないようにしている
 - 文を変えたら作り直す手順:
@@ -46,16 +47,17 @@
 ```
 rm -rf /tmp/pv && mkdir -p /tmp/pv/tests && cp -r assets /tmp/pv/ && cp ride-preview.html /tmp/pv/index.html
 cp tests/train-timer.test.cjs /tmp/pv/tests/
-sed -i "s/assert.equal(routes\[5\].n, 24);/assert.equal(routes[5].n, 10);/; s/assert.equal(routes\[4\].n, 23);/assert.equal(routes[4].n, 26);/; s/\['東京','新青森'\]/['東京','新函館北斗']/; s/bgmer-train-timer-v2/bgmer-train-timer-v3/g; s/assert.equal(mediaElements\[0\].volume, 0.10);/assert.equal(mediaElements[0].volume, 0.75);/" /tmp/pv/tests/train-timer.test.cjs
+sed -i "s/assert.equal(routes\[5\].n, 24);/assert.equal(routes[5].n, 10);/; s/assert.equal(routes\[4\].n, 23);/assert.equal(routes[4].n, 26);/; s/\['東京','新青森'\]/['東京','新函館北斗']/; s/bgmer-train-timer-v2/bgmer-train-timer-v3/g; s/assert.equal(mediaElements\[0\].volume, 0.10);/assert.equal(mediaElements[0].volume, 0.75);/; s/assert.ok(el('overlay').classList.contains('show'));/assert.equal(el('arriveChip').hidden, false); assert.equal(el('overlay').classList.contains('show'), false);/; s/assert.ok(el('overlayTitle').textContent.includes('一周'));/assert.ok(el('arriveTitle').textContent.includes('一周'));/" /tmp/pv/tests/train-timer.test.cjs
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
 
-## テスト版にあって本番にない変更（v16〜v30）
+## テスト版にあって本番にない変更（v16〜v31）
 - 発車音はドアの「プシュー」だけ／iPhoneの音声設定（audioSession）
 - ボタンを小型化、北陸新幹線→かがやき、はやぶさ終点を新函館北斗
 - 電車の窓が消える不具合の修正（**本番には残っている**）
 - BGM を小さくした v3（`assets/music/bgmer-train-timer-v3.*`）。アナウンス中の音量切り替えは廃止（BGMは常に同じ音量）
 - 描画を軽くした（景色は画像化、車輪の回転は停止）／画面ロック防止の取り直しと状態表示（v30から画面上部に浮かせて表示し、数秒で消える。表示が出ても画面がずれない）
+- 終点に着いても別画面（overlay）を出さず、電車を終点に止めたまま景色の下に到着の札を出す。開始ボタンは「🔄 もういちど」でリセット。終点の案内は「終点、〇〇に到着しました。」、旅の時間は「今回の旅は、N分でした。よく頑張ったね！」（`tripEndText`）（v31）
 - 全路線の録音アナウンス（v24で山手線、v25で全路線、v26〜27で三鷹・吉祥寺・高円寺のイントネーション、v28で全駅名を標準アクセントに）
 
 ## 未確認・未決
@@ -66,7 +68,7 @@ cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ## 本番反映の手順（承認後のみ）
 1. `ride-preview.html` を `index.html` にコピー（テスト版の表示を消し、title を `あそびタイマー🚃` に）
 2. `voice-balance-preview.html` を同期（index.html との差は title の「｜音量調整テスト版」と、🎶 の audio-hint の前の `<div class="audio-hint">【音量調整テスト版】アナウンス中のBGMを10%に変更（通常時75%）</div>` の1行のみ、というテストがある。音量切り替え廃止に合わせて文言とテストを見直す）
-3. tests（路線の駅数・行き先・BGMファイル名・音量）、`scripts/build-bgmer-bgm.cjs`、docs を更新
+3. tests（路線の駅数・行き先・BGMファイル名・音量・終点の到着表示＝overlay ではなく arriveChip）、`scripts/build-bgmer-bgm.cjs`、docs を更新
 4. 全テスト、push、公開ページ確認
 
 ## BGM
