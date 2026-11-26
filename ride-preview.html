@@ -237,11 +237,18 @@ input[type=range]::-webkit-slider-thumb {
 .map-train::before { content: ''; display: block; width: 30px; height: 18px; border-radius: 4px 12px 4px 4px; background: #333a4d; }
 .map-train::after { content: ''; position: absolute; left: 12px; top: 20px; border: 5px solid transparent; border-top-color: #333a4d; }
 @media (prefers-reduced-motion: reduce) { .ride * { animation: none !important; transition: none !important; } }
+.track-outer { display: none; }
+.scene { height: 184px; }
+.train { width: 224px; height: 63px; }
+.train-track { height: 66px; bottom: 20px; }
+.wire { position: absolute; left: 0; right: 0; bottom: 88px; height: 1px; background: rgba(40,45,60,.45); }
+.ride.moving .train svg { animation-duration: .5s; }
+@keyframes bob { 50% { transform: translateY(-.7px); } }
 </style>
 </head>
 <body>
 
-<div class="preview-label">【テスト版】走る電車と横の路線図</div>
+<div class="preview-label">【テスト版2】走る電車と横の路線図</div>
 <div class="route-selector">
   <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
@@ -321,12 +328,12 @@ input[type=range]::-webkit-slider-thumb {
   <div class="scene" id="scene" data-phase="0" aria-hidden="true">
     <div class="layer clouds"><svg viewBox="0 0 400 40" preserveAspectRatio="xMidYMid slice"><g transform="translate(30 6) scale(1)" fill="#fff" opacity=".85"><circle cx="12" cy="14" r="9"/><circle cx="25" cy="10" r="11"/><circle cx="38" cy="15" r="8"/><rect x="10" y="14" width="30" height="9" rx="4"/></g><g transform="translate(190 0) scale(0.8)" fill="#fff" opacity=".85"><circle cx="12" cy="14" r="9"/><circle cx="25" cy="10" r="11"/><circle cx="38" cy="15" r="8"/><rect x="10" y="14" width="30" height="9" rx="4"/></g><g transform="translate(300 12) scale(0.7)" fill="#fff" opacity=".85"><circle cx="12" cy="14" r="9"/><circle cx="25" cy="10" r="11"/><circle cx="38" cy="15" r="8"/><rect x="10" y="14" width="30" height="9" rx="4"/></g></svg><svg viewBox="0 0 400 40" preserveAspectRatio="xMidYMid slice"><g transform="translate(30 6) scale(1)" fill="#fff" opacity=".85"><circle cx="12" cy="14" r="9"/><circle cx="25" cy="10" r="11"/><circle cx="38" cy="15" r="8"/><rect x="10" y="14" width="30" height="9" rx="4"/></g><g transform="translate(190 0) scale(0.8)" fill="#fff" opacity=".85"><circle cx="12" cy="14" r="9"/><circle cx="25" cy="10" r="11"/><circle cx="38" cy="15" r="8"/><rect x="10" y="14" width="30" height="9" rx="4"/></g><g transform="translate(300 12) scale(0.7)" fill="#fff" opacity=".85"><circle cx="12" cy="14" r="9"/><circle cx="25" cy="10" r="11"/><circle cx="38" cy="15" r="8"/><rect x="10" y="14" width="30" height="9" rx="4"/></g></svg></div>
     <div class="layer town"><svg viewBox="0 0 400 62" preserveAspectRatio="none"><path d="M0 62 Q50 10 110 62 Z M200 62 Q270 0 340 62 Z" fill="#8fce8a"/><rect x="70" y="28" width="22" height="34" fill="#e9a27c"/><path d="M74 34h14" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M74 44h14" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M74 54h14" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="96" y="14" width="18" height="48" fill="#8ea6d8"/><path d="M100 20h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M100 30h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M100 40h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M100 50h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="118" y="36" width="26" height="26" fill="#f1d27a"/><path d="M122 42h18" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M122 52h18" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="160" y="22" width="16" height="40" fill="#b79ad6"/><path d="M164 28h8" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M164 38h8" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M164 48h8" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="330" y="32" width="24" height="30" fill="#8ea6d8"/><path d="M334 38h16" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M334 48h16" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="358" y="18" width="18" height="44" fill="#e9a27c"/><path d="M362 24h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M362 34h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M362 44h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M362 54h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="28.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="30" cy="46" r="9" fill="#3f9d52"/><rect x="48.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="50" cy="46" r="9" fill="#3f9d52"/><rect x="188.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="190" cy="46" r="9" fill="#3f9d52"/><rect x="223.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="225" cy="46" r="9" fill="#3f9d52"/><rect x="298.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="300" cy="46" r="9" fill="#3f9d52"/></svg><svg viewBox="0 0 400 62" preserveAspectRatio="none"><path d="M0 62 Q50 10 110 62 Z M200 62 Q270 0 340 62 Z" fill="#8fce8a"/><rect x="70" y="28" width="22" height="34" fill="#e9a27c"/><path d="M74 34h14" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M74 44h14" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M74 54h14" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="96" y="14" width="18" height="48" fill="#8ea6d8"/><path d="M100 20h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M100 30h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M100 40h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M100 50h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="118" y="36" width="26" height="26" fill="#f1d27a"/><path d="M122 42h18" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M122 52h18" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="160" y="22" width="16" height="40" fill="#b79ad6"/><path d="M164 28h8" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M164 38h8" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M164 48h8" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="330" y="32" width="24" height="30" fill="#8ea6d8"/><path d="M334 38h16" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M334 48h16" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="358" y="18" width="18" height="44" fill="#e9a27c"/><path d="M362 24h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M362 34h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M362 44h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><path d="M362 54h10" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><rect x="28.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="30" cy="46" r="9" fill="#3f9d52"/><rect x="48.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="50" cy="46" r="9" fill="#3f9d52"/><rect x="188.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="190" cy="46" r="9" fill="#3f9d52"/><rect x="223.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="225" cy="46" r="9" fill="#3f9d52"/><rect x="298.5" y="50" width="3" height="12" fill="#7a5a41"/><circle cx="300" cy="46" r="9" fill="#3f9d52"/></svg></div>
-    <div class="ground"></div><div class="sleepers"></div><div class="rail"></div>
+    <div class="ground"></div><div class="wire"></div><div class="sleepers"></div><div class="rail"></div>
     <div class="post from"></div><div class="post to"></div>
     <div class="sign from"><small id="signFromLabel">いまの駅</small><b id="signFrom"></b></div>
     <div class="sign to"><small>つぎは</small><b id="signTo"></b></div>
     <div class="train-track"><div class="train" id="rideTrain">
-      <svg viewBox="0 0 112 42"><g id="trainLocal"><rect class="body" x="1" y="6" width="50" height="27" rx="4"/><rect class="body" x="56" y="6" width="54" height="27" rx="6"/><path d="M51 26h5" stroke="#444a5c" stroke-width="3"/><rect class="win" x="6" y="11" width="9" height="9" rx="1.5"/><rect class="win" x="19" y="11" width="9" height="9" rx="1.5"/><rect class="win" x="32" y="11" width="9" height="9" rx="1.5"/><rect class="win" x="61" y="11" width="9" height="9" rx="1.5"/><rect class="win" x="74" y="11" width="9" height="9" rx="1.5"/><rect class="win" x="87" y="11" width="9" height="9" rx="1.5"/><rect class="win" x="99" y="10" width="8" height="12" rx="2"/><rect class="stripe" x="1.5" y="23" width="49" height="6"/><rect class="stripe" x="56.5" y="23" width="53" height="6"/><circle cx="106" cy="30" r="2" fill="#ffd93b"/></g><g id="trainBullet"><rect class="body" x="1" y="8" width="50" height="25" rx="4"/><path class="body" d="M56 8H76C92 10 100 22 111 25Q115 33 103 33H56Z"/><path d="M51 26h5" stroke="#444a5c" stroke-width="3"/><rect class="win" x="6" y="13" width="7" height="7" rx="2"/><rect class="win" x="17" y="13" width="7" height="7" rx="2"/><rect class="win" x="28" y="13" width="7" height="7" rx="2"/><rect class="win" x="39" y="13" width="7" height="7" rx="2"/><rect class="win" x="60" y="13" width="7" height="7" rx="2"/><rect class="win" x="70" y="13" width="7" height="7" rx="2"/><path class="win" d="M82 13Q89 15 94 20H82Z"/><rect class="stripe" x="1.5" y="23" width="49" height="5"/><path class="stripe" d="M56.5 23H99L106 28H56.5Z"/></g><g class="wheel"><circle cx="14" cy="36" r="5.5" fill="#2b2f3d"/><path d="M10 36h8M14 32v8" stroke="#cfd3de" stroke-width="1.3"/></g><g class="wheel"><circle cx="30" cy="36" r="5.5" fill="#2b2f3d"/><path d="M26 36h8M30 32v8" stroke="#cfd3de" stroke-width="1.3"/></g><g class="wheel"><circle cx="46" cy="36" r="5.5" fill="#2b2f3d"/><path d="M42 36h8M46 32v8" stroke="#cfd3de" stroke-width="1.3"/></g><g class="wheel"><circle cx="66" cy="36" r="5.5" fill="#2b2f3d"/><path d="M62 36h8M66 32v8" stroke="#cfd3de" stroke-width="1.3"/></g><g class="wheel"><circle cx="84" cy="36" r="5.5" fill="#2b2f3d"/><path d="M80 36h8M84 32v8" stroke="#cfd3de" stroke-width="1.3"/></g><g class="wheel"><circle cx="98" cy="36" r="5.5" fill="#2b2f3d"/><path d="M94 36h8M98 32v8" stroke="#cfd3de" stroke-width="1.3"/></g></svg>
+      <svg id="trainSvg" viewBox="0 0 224 63"></svg>
     </div></div>
   </div>
   <div class="map-view" id="mapView"><div class="map-line" id="mapLine"></div></div>
@@ -1146,10 +1153,83 @@ function buildList() {
 // ============================================================
 const MAP_GAP = 56;
 let rideSeg = -1;
+// 路線ごとの車体色: [車体, 屋根側の色, 帯, 細帯, 先頭形状]
+const TRAIN_STYLES = [
+  ['#cfd5dc', null,      '#f5c800', '#f5c800', 'commuter'],
+  ['#f7f8fa', null,      '#1556b0', '#1556b0', 'bullet'],
+  ['#cfd5dc', null,      '#f15a22', '#f15a22', 'commuter'],
+  ['#eef0f3', '#3a3d46', '#8a4bb5', '#8a4bb5', 'express'],
+  ['#f4f5f7', '#118a72', '#e4558f', null,      'bullet'],
+  ['#f4f5f7', '#1d3f86', '#c8843c', '#1d3f86', 'bullet'],
+  ['#cfd5dc', '#80c241', '#80c241', '#80c241', 'commuter'],
+];
+function trainSVG(idx) {
+  const [body, top, band, thin, kind] = TRAIN_STYLES[idx];
+  const rect = (x,y,w,h,fill,rx=0,extra='') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" ${extra}/>`;
+  const rear = 'M3 13Q3 10 7 10H103Q106 10 106 13V47H3Z';
+  const head = {
+    commuter: 'M112 13Q112 10 115 10H207Q215 10 217 18L221 34V47H112Z',
+    express:  'M112 13Q112 10 115 10H183C198 11 209 22 218 34Q222 41 218 47H112Z',
+    bullet:   'M112 14Q112 11 115 11H152C174 12 181 27 200 32C214 35 222 40 221 43Q220 47 211 47H112Z',
+  }[kind];
+  let out = `<defs>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7d9fbd"/><stop offset=".45" stop-color="#233a55"/><stop offset="1" stop-color="#0f1c2c"/></linearGradient>
+    <clipPath id="cars"><path d="${rear}"/><path d="${head}"/></clipPath></defs>`;
+  out += `<ellipse cx="112" cy="60" rx="108" ry="2.5" fill="#000" opacity=".18"/>`;
+  // パンタグラフと屋根上機器
+  out += `<path d="M52 10L63 5L55 1M47 1H65" stroke="#3b4050" stroke-width="1.2" fill="none"/>`;
+  [[16,26],[72,22],[124,24]].forEach(([x,w]) => out += rect(x, kind==='bullet'&&x>110?8:7, w, 3.5, '#8b919d', 1));
+  // 連結幌
+  out += rect(105,14,8,32,'#4a4f5c') + '<path d="M107 14V46M110 14V46" stroke="#2c303b" stroke-width=".8"/>';
+  out += `<g clip-path="url(#cars)">` + rect(0,0,224,63,body);
+  if (kind==='commuter') {
+    if (!top) for (let y=38; y<46; y+=2.5) out += rect(0,y,224,.5,'#a9b0ba');
+    out += rect(0,12.5,224,2.8,band) + rect(0,31,224,4.5,band) + rect(0,36.5,224,1,thin);
+  } else if (kind==='express') {
+    out += rect(0,16,224,14,top) + rect(0,35,224,3.5,band) + rect(0,40,224,.9,thin);
+  } else {
+    if (top && idx===4) out += rect(0,0,224,31,top) + '<path d="M150 31C180 31 196 36 224 41V0H150Z" fill="'+top+'"/>' + rect(0,31,224,2.2,band);
+    else if (top) out += rect(0,0,224,18,top) + '<path d="M150 17C175 20 190 32 215 40L224 30V0H150Z" fill="'+top+'"/>' + rect(0,31,150,2,band) + rect(0,34.5,150,1.6,thin);
+    else out += rect(0,32,224,3,band) + rect(0,36.5,224,1.2,thin);
+  }
+  out += rect(0,0,224,47,'url(#shade)') + '</g>';
+  const win = (x,y,w,h,rx=1.5) => rect(x,y,w,h,'url(#glass)',rx,'stroke="#59606d" stroke-width=".7"');
+  const door = x => rect(x,15.5,10,30.5,'none',1,'stroke="#5d6470" stroke-width=".8"') + `<path d="M${x+5} 15.5V46" stroke="#5d6470" stroke-width=".6"/>` + win(x+1.3,19,2.7,10,.8) + win(x+6,19,2.7,10,.8);
+  if (kind==='commuter') {
+    [10,39,68,91].forEach(x => out += door(x));
+    [119,148,177].forEach(x => out += door(x));
+    [22,51].forEach(x => out += win(x,18,7,11) + win(x+8,18,7,11));
+    out += win(81,18,8,11);
+    [131,160].forEach(x => out += win(x,18,7,11) + win(x+8,18,7,11));
+    out += win(190,18,8,11) + '<path d="M202 15H208Q212 15 214 20L217 30H202Z" fill="url(#glass)" stroke="#2b303b" stroke-width="1"/>';
+    out += rect(202,11.5,9,2.2,'#1c212c',.8) + rect(204,12,5,1.1,'#ffb13b');
+  } else {
+    const y = kind==='express' ? 18 : 20, h = kind==='express' ? 9.5 : 6.5, w = kind==='express' ? 10 : 6;
+    for (let x=17; x<93; x+=w+3) out += win(x,y,w,h,2);
+    for (let x=126; x<(kind==='express'?178:152); x+=w+3) out += win(x,y,w,h,2);
+    out += door(6).replace(/30.5/,'30.5') + rect(115,17,7,29,'none',2,'stroke="#8a909b" stroke-width=".8"');
+    out += kind==='express'
+      ? '<path d="M187 15Q198 18 207 29L196 28Q190 24 184 15Z" fill="url(#glass)" stroke="#2b303b"/>'
+      : '<path d="M161 15Q172 18 180 26L168 25Q164 21 158 15Z" fill="url(#glass)" stroke="#2b303b" stroke-width=".8"/>';
+  }
+  out += `<path d="${rear}" fill="none" stroke="#4b515f" stroke-width=".9"/><path d="${head}" fill="none" stroke="#4b515f" stroke-width=".9"/>`;
+  // ライト
+  const lx = kind==='bullet' ? 209 : kind==='express' ? 213 : 214, ly = kind==='bullet' ? 39.5 : 39;
+  out += `<circle cx="${lx}" cy="${ly}" r="4.5" fill="#fff3a6" opacity=".35"/><ellipse cx="${lx}" cy="${ly}" rx="2.6" ry="1.5" fill="#fffbe0"/>` + rect(3.5,38,2,4,'#d8343f',.8);
+  // 床下機器と台車
+  out += rect(4,47,101,2.5,'#2f333e') + rect(112,47,102,2.5,'#2f333e');
+  [[39,16],[58,13],[145,18],[166,10]].forEach(([x,w]) => out += rect(x,49,w,6,'#474d5a',1) + `<path d="M${x+2} 51h${w-4}M${x+2} 53h${w-4}" stroke="#2b2f39" stroke-width=".6"/>`);
+  [20,89,129,196].forEach(c => {
+    out += rect(c-14,49,28,4,'#2b2f39',1.5);
+    [c-8,c+8].forEach(x => out += `<g class="wheel"><circle cx="${x}" cy="55" r="5" fill="#23262e" stroke="#8d94a3" stroke-width="1.1"/><circle cx="${x}" cy="55" r="1.7" fill="#aab1bf"/><path d="M${x-3.5} 55h7" stroke="#6c7382" stroke-width=".8"/></g>`);
+    out += rect(c-4,50.5,8,2,'#6c7382',1);
+  });
+  return out;
+}
+
 function buildRide() {
-  const bullet = ROUTES[routeIdx].whistle === 'shinkansen';
-  document.getElementById('trainBullet').style.display = bullet ? '' : 'none';
-  document.getElementById('trainLocal').style.display = bullet ? 'none' : '';
+  document.getElementById('trainSvg').innerHTML = trainSVG(routeIdx);
   const line = document.getElementById('mapLine');
   line.style.width = (N * MAP_GAP) + 'px';
   line.innerHTML = '<div class="map-rail" style="width:' + ((N-1)*MAP_GAP) + 'px"></div><div class="map-done" id="mapDone"></div>'
@@ -1169,7 +1249,7 @@ function renderRide(progress) {
   const arrived = progress >= 1;
   document.getElementById('ride').classList.toggle('moving', running);
   document.getElementById('scene').setAttribute('data-phase', progress >= 0.8 ? '2' : progress >= 0.5 ? '1' : '0');
-  document.getElementById('rideTrain').style.left = `calc((100% - 112px) * ${frac.toFixed(5)})`;
+  document.getElementById('rideTrain').style.left = `calc((100% - 224px) * ${frac.toFixed(5)})`;
   if (seg !== rideSeg || arrived) {
     document.getElementById('signFrom').textContent = STATIONS[seg].name;
     document.getElementById('signTo').textContent = STATIONS[seg+1].name;
