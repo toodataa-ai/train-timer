@@ -1,6 +1,7 @@
 """集めた文から四国めたん(ノーマル, style 2)の音声を作る。既にある音声は作り直さない。
 使い方: python3 scripts/build-voice.py 文.json ONNXRuntimeのso 辞書フォルダ 0.vvm
-準備は HANDOFF.md を参照。クレジット「VOICEVOX:四国めたん」の画面表示が必須。
+準備は HANDOFF.md を参照。
+読みの誤り（例: ハチノヘ→ハチノエ）は該当の m4a を消し、create_audio_query_from_kana で直した読みから作る。クレジット「VOICEVOX:四国めたん」の画面表示が必須。
 """
 import hashlib, json, pathlib, subprocess, sys, tempfile
 from voicevox_core.blocking import Onnxruntime, OpenJtalk, Synthesizer, VoiceModelFile
@@ -11,7 +12,8 @@ manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
 syn = Synthesizer(Onnxruntime.load_once(filename=ort_path), OpenJtalk(dict_dir))
 with VoiceModelFile.open(vvm) as model:
     syn.load_voice_model(model)
-texts = dict.fromkeys(t for v in json.load(open(texts_path, encoding='utf-8')).values() for t in v)
+by_route = json.load(open(texts_path, encoding='utf-8'))
+texts = dict.fromkeys(t for v in by_route.values() for t in v)
 made = 0
 with tempfile.TemporaryDirectory() as tmp:
     wav = pathlib.Path(tmp) / 'v.wav'
@@ -26,5 +28,7 @@ with tempfile.TemporaryDirectory() as tmp:
                             str(out / name)], check=True)
             made += 1
         manifest['clips'][text] = name
+# 路線ごとの文の一覧（画面は選んだ路線の分だけ読み込む）
+manifest.setdefault('routes', {}).update(by_route)
 manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding='utf-8')
 print('made', made, 'total', len(manifest['clips']))

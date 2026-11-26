@@ -415,7 +415,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版24】山手線は録音アナウンス（試作）</div>
+<div class="preview-label">【テスト版25】全路線を録音アナウンスに</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -468,7 +468,7 @@ body > .wake-panel[hidden] { display: none; }
   <button type="button" class="btn-audio-test" id="testMusicBtn" onclick="testMusic()">🎧 音楽をためす（5秒）</button>
   <span id="musicStatus" role="status" aria-live="polite">BGM：準備OK</span>
 </div>
-<div class="audio-hint">【試作】山手線のアナウンス音声：VOICEVOX:四国めたん</div>
+<div class="audio-hint">アナウンス音声：VOICEVOX:四国めたん</div>
   <div class="audio-hint">🎶 前半は楽しく、半分でBGMチェンジ、残り20%でラストスパート！</div>
 <details class="music-credits">
   <summary>使用BGM・音源の状態</summary>
@@ -1247,23 +1247,36 @@ function toSpeechText(text) {
   return names.length ? text.replace(new RegExp(names.join('|'), 'g'), n => dict[n]) : text;
 }
 // ============================================================
-// 録音済みアナウンス（試作：山手線のみ）VOICEVOX:四国めたん
+// 録音済みアナウンス（全路線）VOICEVOX:四国めたん
 // 端末の読み上げは終わる瞬間に画面が引っかかるため、音声ファイルを流す
 // ============================================================
 const VOICE_DIR = 'assets/voice/metan/';
-const VOICE_ROUTES = [6];
-let voiceClips = null, voiceLoading = false, voiceSource = null;
-const voiceData = {};
+const VOICE_ROUTES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+let voiceClips = null, voiceRouteTexts = null, voiceLoading = false, voiceSource = null;
+const voiceData = {}, voiceRequested = {};
+// 選んだ路線の文だけ取得する（全路線分を一度に取ると通信が重い）
+function fetchRouteClips(idx) {
+  if (!voiceClips || !voiceRouteTexts) return;
+  const texts = voiceRouteTexts[idx] || [];
+  texts.forEach(text => {
+    const file = voiceClips[text];
+    if (!file || voiceRequested[text]) return;
+    voiceRequested[text] = true;
+    fetch(VOICE_DIR + file).then(r => r.ok ? r.arrayBuffer() : null)
+      .then(b => { if (b) voiceData[text] = b; else delete voiceRequested[text]; })
+      .catch(() => { delete voiceRequested[text]; });
+  });
+}
 function loadVoicePack() {
-  if (voiceClips || voiceLoading || !VOICE_ROUTES.includes(routeIdx) || !window.fetch) return;
+  if (!VOICE_ROUTES.includes(routeIdx) || !window.fetch) return;
+  if (voiceClips) { fetchRouteClips(routeIdx); return; }
+  if (voiceLoading) return;
   voiceLoading = true;
   fetch(VOICE_DIR + 'manifest.json').then(r => r.ok ? r.json() : null).then(m => {
     if (!m || !m.clips) return;
     voiceClips = m.clips;
-    Object.keys(m.clips).forEach(text => {
-      fetch(VOICE_DIR + m.clips[text]).then(r => r.ok ? r.arrayBuffer() : null)
-        .then(b => { if (b) voiceData[text] = b; }).catch(() => {});
-    });
+    voiceRouteTexts = m.routes || {};
+    fetchRouteClips(routeIdx);
   }).catch(() => {}).then(() => { voiceLoading = false; });
 }
 function usingVoicePack() { return VOICE_ROUTES.includes(routeIdx) && !!voiceClips; }
