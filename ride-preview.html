@@ -315,11 +315,17 @@ rt { font-size: 9px; font-weight: 700; line-height: 1.1; }
   .map-line { height: 132px; }
   .controls .btn { padding: 9px; }
 }
+/* 進行バーのつまみで途中へスキップ */
+.bar-area { margin: 7px 0 9px; }
+.bar-area input.seek { position: absolute; left: -15px; width: calc(100% + 30px); top: 50%; height: 36px; margin: -18px 0 0; padding: 0; background: transparent; z-index: 3; touch-action: none; }
+.bar-area input.seek::-webkit-slider-runnable-track { height: 36px; background: transparent; }
+.bar-area input.seek::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; margin-top: 3px; border-radius: 50%; background: rgba(255,255,255,.92); border: 6px solid var(--accent); box-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.seek-hint { font-size: 10px; color: #858da7; }
 </style>
 </head>
 <body>
 
-<div class="preview-label">【テスト版8】BGM差し替え</div>
+<div class="preview-label">【テスト版9】BGM差し替え・スキップ</div>
 <div class="route-selector">
   <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
@@ -390,9 +396,9 @@ rt { font-size: 9px; font-weight: 700; line-height: 1.1; }
   <div class="music-pace" id="musicPace" data-phase="0">🎵 出発準備中</div>
   <div class="progress-wrap">
     <div class="progress-label"><span id="labelFrom">三鷹</span><span id="labelTo">千葉</span></div>
-    <div class="bar-area"><div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div><div id="barDots"></div></div>
+    <div class="bar-area"><div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div><div id="barDots"></div><input type="range" class="seek" id="seekSlider" min="0" max="1000" step="1" value="0" aria-label="とちゅうまで スキップ"></div>
     <div class="bar-names" id="barNames"></div>
-    <div class="progress-label counts"><span id="passedCount">0駅通過</span><span id="remainCount">—</span></div>
+    <div class="progress-label counts"><span id="passedCount">0駅通過</span><span class="seek-hint">◯を うごかすと スキップ</span><span id="remainCount">—</span></div>
   </div>
 </div>
 
@@ -1353,6 +1359,26 @@ function buildBar() {
     `<span class="bar-name${i===0?' first':i===N-1?' last':''}" id="barName${i}" style="left:${i/(N-1)*100}%">${kana(STATIONS[i])}</span>`).join('');
   layoutBarNames();
 }
+// 進行バーのつまみで、旅の途中の地点へ移動する
+let seeking = false;
+function seekTo(fraction) {
+  if (!totalMs) return;
+  // 終点ぴったりへの移動で突然終わらないよう、最後の3秒は残す
+  remainMs = Math.max(3000, Math.round(totalMs * (1 - Math.max(0, Math.min(1, fraction)))));
+  remainMs = Math.min(totalMs, remainMs);
+  if (running) startTime = Date.now() - (totalMs - remainMs);
+  isFresh = !running && remainMs === totalMs;
+  clearAnnouncements(); // 移動前の駅のアナウンスは止める
+  stopWorld();
+  if (running) updateMusicPhase();
+  renderDisplay();
+}
+function initSeek() {
+  const el = document.getElementById('seekSlider');
+  if (!el || !el.addEventListener) return;
+  el.addEventListener('input', () => { seeking = true; seekTo(el.value / 1000); });
+  ['change','pointerup','pointercancel','touchend','blur'].forEach(t => el.addEventListener(t, () => { seeking = false; }));
+}
 // 名前が重なる場合は文字だけ左右にずらす（丸印は実際の位置のまま）
 function layoutBarNames() {
   const box = document.getElementById('barNames');
@@ -1423,6 +1449,8 @@ function renderRide(progress) {
   document.getElementById('scene').setAttribute('data-phase', progress >= 0.8 ? '2' : progress >= 0.5 ? '1' : '0');
   moveWorld(pos, seg);
   renderBar(pos);
+  const seek = document.getElementById('seekSlider');
+  if (seek && !seeking) seek.value = Math.round(pos / (N-1) * 1000);
   if (seg !== rideSeg || arrived) {
     document.getElementById('signFrom').innerHTML = kana(STATIONS[seg]);
     document.getElementById('signTo').innerHTML = kana(STATIONS[seg+1]);
@@ -1455,6 +1483,7 @@ function applySlider(val) {
   document.getElementById('sliderValue').textContent = min + 'ふん';
   totalMs = min * 60000;
   remainMs = totalMs;
+  if (!running) isFresh = true;
   computeThresholds();
   refreshStationTimes();
   renderDisplay();
@@ -1703,6 +1732,7 @@ function showToast(msg) {
 // 初期化 — scriptの末尾で直接実行（ローカルHTML対応）
 // ============================================================
 selectRoute(0);
+initSeek();
 document.querySelectorAll('.route-btn, .alert, .audio-hint, .btn-audio-test').forEach(addFurigana);
 loadBGMerBundle();
 </script>
