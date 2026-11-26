@@ -831,13 +831,17 @@ function resumeActx() {
 
 // 発車の音は、ドアが閉まる「プシュー、ドン」だけ。録音は使わず、その場で合成する
 function scheduleDeparture(c, out, t0) {
+  // 音を大きくしつつ、割れないように頭打ちをやわらかくする
+  const limiter = c.createWaveShaper();
+  limiter.curve = Float32Array.from({length: 1025}, (_, i) => 0.97 * Math.tanh(2 * (i/512 - 1)) / Math.tanh(2));
+  limiter.connect(out);
   const env = (peak, s, d, attack, release) => {
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, s);
     g.gain.linearRampToValueAtTime(peak, s + attack);
     g.gain.setValueAtTime(peak, s + Math.max(attack, d - release));
     g.gain.linearRampToValueAtTime(0.0001, s + d);
-    g.connect(out);
+    g.connect(limiter);
     return g;
   };
   const filter = (type, freq, dest) => {
@@ -858,8 +862,8 @@ function scheduleDeparture(c, out, t0) {
   const t = t0 + 0.65;
   const o = c.createOscillator();
   o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.28);
-  o.connect(env(0.95, t, 0.28, 0.005, 0.23)); o.start(t); o.stop(t + 0.33);
-  noise(t, 0.1, filter('lowpass', 900, env(0.9, t, 0.1, 0.003, 0.07)));
+  o.connect(env(0.9, t, 0.28, 0.005, 0.23)); o.start(t); o.stop(t + 0.33);
+  noise(t, 0.1, filter('lowpass', 900, env(0.8, t, 0.1, 0.003, 0.07)));
 }
 
 let departureOut = null;
