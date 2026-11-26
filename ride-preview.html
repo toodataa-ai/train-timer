@@ -415,7 +415,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版23】読み上げ後の引っかかり調整</div>
+<div class="preview-label">【テスト版24】山手線は録音アナウンス（試作）</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -468,7 +468,8 @@ body > .wake-panel[hidden] { display: none; }
   <button type="button" class="btn-audio-test" id="testMusicBtn" onclick="testMusic()">🎧 音楽をためす（5秒）</button>
   <span id="musicStatus" role="status" aria-live="polite">BGM：準備OK</span>
 </div>
-<div class="audio-hint">🎶 前半は楽しく、半分でBGMチェンジ、残り20%でラストスパート！</div>
+<div class="audio-hint">【試作】山手線のアナウンス音声：VOICEVOX:四国めたん</div>
+  <div class="audio-hint">🎶 前半は楽しく、半分でBGMチェンジ、残り20%でラストスパート！</div>
 <details class="music-credits">
   <summary>使用BGM・音源の状態</summary>
   <div id="bgmerAvailability" role="status">フリー音源の準備状況を確認しています…</div>
@@ -1215,7 +1216,8 @@ function clearAnnouncements() {
   announcementTimers.forEach(id => clearTimeout(id));
   announcementTimers.clear();
   speechSeq++;
-  if (window.speechSynthesis) {
+  stopClip();
+  if (window.speechSynthesis && (!usingVoicePack() || speechSynthesis.speaking || speechSynthesis.pending)) {
     try { speechSynthesis.cancel(); } catch(e) {}
   }
   duckMusic(false);
@@ -1244,8 +1246,49 @@ function toSpeechText(text) {
   const names = Object.keys(dict).sort((a,b) => b.length - a.length);
   return names.length ? text.replace(new RegExp(names.join('|'), 'g'), n => dict[n]) : text;
 }
+// ============================================================
+// 録音済みアナウンス（試作：山手線のみ）VOICEVOX:四国めたん
+// 端末の読み上げは終わる瞬間に画面が引っかかるため、音声ファイルを流す
+// ============================================================
+const VOICE_DIR = 'assets/voice/metan/';
+const VOICE_ROUTES = [6];
+let voiceClips = null, voiceLoading = false, voiceSource = null;
+const voiceData = {};
+function loadVoicePack() {
+  if (voiceClips || voiceLoading || !VOICE_ROUTES.includes(routeIdx) || !window.fetch) return;
+  voiceLoading = true;
+  fetch(VOICE_DIR + 'manifest.json').then(r => r.ok ? r.json() : null).then(m => {
+    if (!m || !m.clips) return;
+    voiceClips = m.clips;
+    Object.keys(m.clips).forEach(text => {
+      fetch(VOICE_DIR + m.clips[text]).then(r => r.ok ? r.arrayBuffer() : null)
+        .then(b => { if (b) voiceData[text] = b; }).catch(() => {});
+    });
+  }).catch(() => {}).then(() => { voiceLoading = false; });
+}
+function usingVoicePack() { return VOICE_ROUTES.includes(routeIdx) && !!voiceClips; }
+function stopClip() {
+  if (voiceSource) { try { voiceSource.stop(); } catch(e) {} voiceSource = null; }
+}
+function playClip(text) {
+  if (!usingVoicePack() || !voiceData[text]) return false;
+  const c = getActx(); if (!c) return false;
+  stopClip();
+  const token = ++speechSeq;
+  resumeActx();
+  // decodeAudioDataは渡したデータを使い切るので、コピーを渡す
+  c.decodeAudioData(voiceData[text].slice(0), audio => {
+    if (token !== speechSeq || !announceOn) return;
+    const source = c.createBufferSource();
+    source.buffer = audio; source.connect(c.destination); source.start();
+    voiceSource = source;
+  }, () => {});
+  return true;
+}
+
 function speakText(text) {
   text = toSpeechText(text);
+  if (announceOn && playClip(text)) return;
   if (!window.speechSynthesis || !announceOn) return;
   try {
     if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
@@ -1274,7 +1317,7 @@ function speakText(text) {
 // ユーザー操作タイミングで Audio + Speech を両方アンロック
 function unlockAll() {
   resumeActx();
-  if (window.speechSynthesis) {
+  if (window.speechSynthesis && !usingVoicePack()) {
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(' ');
@@ -1309,6 +1352,7 @@ function selectRoute(idx) {
   document.getElementById('labelTo').textContent     = r.to;
   document.getElementById('startBtn').textContent    = r.icon + ' しゅっぱつ！';
   STATIONS = r.stations; N = STATIONS.length;
+  loadVoicePack();
   buildList();
   buildRide();
   resetState();
