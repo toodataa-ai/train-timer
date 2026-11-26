@@ -9,12 +9,14 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**v15 の内容**）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=28 ＝ `ride-preview.html`（v28）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=29 ＝ `ride-preview.html`（v29）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
 - 全9路線・両方向の348文を VOICEVOX:四国めたん（ノーマル style 2）で作成済み（`assets/voice/metan/`）
 - `manifest.json` の `routes` に路線ごとの文の一覧があり、画面は選んだ路線の分だけ読み込む
+- v28 で「アナウンスが消えた」: 端末に古い manifest（max-age 600）が残り、消した旧ファイルを探して失敗。さらに manifest があるだけで端末の読み上げの準備（iOSのアンロック）を省いていたため、代わりの読み上げも鳴らなかった。v29 で manifest を毎回サーバーに確認（no-cache）、ファイルが無ければ一度だけ取り直し、録音が揃うまでは読み上げも準備するように修正
+- 音声を作り直すときは古いファイルを消すので、上の仕組みを外さないこと
 - 読み・アクセントの直し（`scripts/fix-voice-reading.py`。build-voice.py の後に毎回実行する）
   - 誤読: ハチノヘ・ニノヘ・シチノヘトワダ（「ヘ」が「エ」になっていた）
   - 利用者の希望のイントネーション（3案を聞き比べてもらい選ばれた）: 三鷹・吉祥寺は平ら（平板、v26）、高円寺は最初が高い「コ↓ーエンジ」（頭高、v27）
@@ -48,7 +50,7 @@ sed -i "s/assert.equal(routes\[5\].n, 24);/assert.equal(routes[5].n, 10);/; s/as
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
 
-## テスト版にあって本番にない変更（v16〜v28）
+## テスト版にあって本番にない変更（v16〜v29）
 - 発車音はドアの「プシュー」だけ／iPhoneの音声設定（audioSession）
 - ボタンを小型化、北陸新幹線→かがやき、はやぶさ終点を新函館北斗
 - 電車の窓が消える不具合の修正（**本番には残っている**）

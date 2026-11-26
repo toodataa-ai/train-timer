@@ -415,7 +415,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版28】全路線を録音アナウンスに（駅名を標準アクセントに）</div>
+<div class="preview-label">【テスト版29】全路線を録音アナウンスに（駅名を標準アクセントに・音声が出ない不具合を修正）</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -1252,7 +1252,7 @@ function toSpeechText(text) {
 // ============================================================
 const VOICE_DIR = 'assets/voice/metan/';
 const VOICE_ROUTES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-let voiceClips = null, voiceRouteTexts = null, voiceLoading = false, voiceSource = null;
+let voiceClips = null, voiceRouteTexts = null, voiceLoading = false, voiceSource = null, voiceReloaded = false;
 const voiceData = {}, voiceRequested = {};
 // 選んだ路線の文だけ取得する（全路線分を一度に取ると通信が重い）
 function fetchRouteClips(idx) {
@@ -1260,31 +1260,48 @@ function fetchRouteClips(idx) {
   const texts = voiceRouteTexts[idx] || [];
   texts.forEach(text => {
     const file = voiceClips[text];
-    if (!file || voiceRequested[text]) return;
+    if (!file || voiceRequested[text] || voiceData[text]) return;
     voiceRequested[text] = true;
-    fetch(VOICE_DIR + file).then(r => r.ok ? r.arrayBuffer() : null)
-      .then(b => { if (b) voiceData[text] = b; else delete voiceRequested[text]; })
+    fetch(VOICE_DIR + file).then(r => {
+      if (!r.ok) { delete voiceRequested[text]; reloadVoiceManifest(); return null; }
+      return r.arrayBuffer();
+    }).then(b => { if (b) voiceData[text] = b; })
       .catch(() => { delete voiceRequested[text]; });
   });
 }
-function loadVoicePack() {
-  if (!VOICE_ROUTES.includes(routeIdx) || !window.fetch) return;
-  if (voiceClips) { fetchRouteClips(routeIdx); return; }
-  if (voiceLoading) return;
+// 音声の一覧を取得する。端末に古い一覧が残っていると消えたファイルを探してしまうので、毎回サーバーに確認する
+function fetchVoiceManifest(mode) {
   voiceLoading = true;
-  fetch(VOICE_DIR + 'manifest.json').then(r => r.ok ? r.json() : null).then(m => {
+  return fetch(VOICE_DIR + 'manifest.json', { cache: mode }).then(r => r.ok ? r.json() : null).then(m => {
     if (!m || !m.clips) return;
     voiceClips = m.clips;
     voiceRouteTexts = m.routes || {};
     fetchRouteClips(routeIdx);
   }).catch(() => {}).then(() => { voiceLoading = false; });
 }
-function usingVoicePack() { return VOICE_ROUTES.includes(routeIdx) && !!voiceClips; }
+// ファイルが見つからないときは、一覧を一度だけ取り直す
+function reloadVoiceManifest() {
+  if (voiceReloaded || voiceLoading) return;
+  voiceReloaded = true;
+  fetchVoiceManifest('reload');
+}
+function loadVoicePack() {
+  if (!VOICE_ROUTES.includes(routeIdx) || !window.fetch) return;
+  if (voiceClips) { fetchRouteClips(routeIdx); return; }
+  if (voiceLoading) return;
+  fetchVoiceManifest('no-cache');
+}
+// 選んだ路線の録音がすべて揃っているか（揃っていなければ端末の読み上げも使えるようにしておく）
+function usingVoicePack() {
+  if (!VOICE_ROUTES.includes(routeIdx) || !voiceClips || !voiceRouteTexts) return false;
+  const texts = voiceRouteTexts[routeIdx] || [];
+  return texts.length > 0 && texts.every(t => voiceData[t]);
+}
 function stopClip() {
   if (voiceSource) { try { voiceSource.stop(); } catch(e) {} voiceSource = null; }
 }
 function playClip(text) {
-  if (!usingVoicePack() || !voiceData[text]) return false;
+  if (!VOICE_ROUTES.includes(routeIdx) || !voiceData[text]) return false;
   const c = getActx(); if (!c) return false;
   stopClip();
   const token = ++speechSeq;
