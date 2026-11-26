@@ -9,12 +9,12 @@ const {spawnSync} = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const directory = path.join(root, 'assets', 'music');
 const sources = path.join(directory, 'source');
-const outputFile = path.join(directory, 'bgmer-train-timer.m4a');
-const manifestFile = path.join(directory, 'bgmer-train-timer.json');
+const outputFile = path.join(directory, 'bgmer-train-timer-v2.m4a');
+const manifestFile = path.join(directory, 'bgmer-train-timer-v2.json');
 const tracks = [
   {file:'01-happiness.mp3',title:'並走ハピネス',url:'https://bgmer.net/music/277/'},
-  {file:'02-groove-coaster.mp3',title:'グルーヴコースター',url:'https://bgmer.net/music/251/'},
-  {file:'03-explosion.mp3',title:'爆発寸前！',url:'https://bgmer.net/music/148/'}
+  {file:'02-yuran-hikou.mp3',title:'遊覧飛行',url:'https://bgmer.net/music/439/'},
+  {file:'03-groove-coaster.mp3',title:'グルーヴコースター',url:'https://bgmer.net/music/251/'}
 ];
 
 function command(executable, args) {
