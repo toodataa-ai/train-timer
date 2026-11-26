@@ -9,7 +9,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**v15 の内容**）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=27 ＝ `ride-preview.html`（v27）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=28 ＝ `ride-preview.html`（v28）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -18,12 +18,13 @@
 - 読み・アクセントの直し（`scripts/fix-voice-reading.py`。build-voice.py の後に毎回実行する）
   - 誤読: ハチノヘ・ニノヘ・シチノヘトワダ（「ヘ」が「エ」になっていた）
   - 利用者の希望のイントネーション（3案を聞き比べてもらい選ばれた）: 三鷹・吉祥寺は平ら（平板、v26）、高円寺は最初が高い「コ↓ーエンジ」（頭高、v27）
+  - 駅名のアクセントは辞書の標準アクセント（v28）: 文中の駅名を漢字にして VOICEVOX に渡したときのアクセントを使い、読みはカタカナのまま。漢字だと読みが変わる駅（国立・北上・長谷・西千葉・水沢江刺の文中など）は従来のまま
   - 新しい希望は聞き比べ用の音声（今の読み・平ら・頭高など）を作って送り、選んでもらう
   - 直した音声は新しいファイル名（k〜.m4a）にして、端末に古い音声が残らないようにしている
 - 文を変えたら作り直す手順:
-  1. `python3 scripts/collect-voice-texts.py /tmp/texts.json`（python の playwright が必要。入っていない環境では `chromium.launch(executable_path='/opt/pw-browsers/chromium')` に変えた複製で動かした）
+  1. `python3 scripts/collect-voice-texts.py /tmp/texts.json`（駅名一覧 /tmp/texts.stations.json も出る）（python の playwright が必要。入っていない環境では `chromium.launch(executable_path='/opt/pw-browsers/chromium')` に変えた複製で動かした）
   2. VOICEVOX を準備（下記）し、`python3 scripts/build-voice.py /tmp/texts.json <ONNX Runtimeのso> <辞書フォルダ> <0.vvm>`
-  3. `python3 scripts/fix-voice-reading.py <ONNX Runtimeのso> <辞書フォルダ> <0.vvm>`
+  3. `python3 scripts/fix-voice-reading.py <ONNX Runtimeのso> <辞書フォルダ> <0.vvm> /tmp/texts.stations.json`
   4. 出力される読み（カナ）を確認し、駅名の誤読がないか見る
 
 注意: `speakText` は文が manifest と一字一句一致するときだけ録音を流し、なければ端末の読み上げになる。アナウンス文や駅名を変えたら音声の作り直しが必要。
@@ -47,13 +48,13 @@ sed -i "s/assert.equal(routes\[5\].n, 24);/assert.equal(routes[5].n, 10);/; s/as
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
 
-## テスト版にあって本番にない変更（v16〜v27）
+## テスト版にあって本番にない変更（v16〜v28）
 - 発車音はドアの「プシュー」だけ／iPhoneの音声設定（audioSession）
 - ボタンを小型化、北陸新幹線→かがやき、はやぶさ終点を新函館北斗
 - 電車の窓が消える不具合の修正（**本番には残っている**）
 - BGM を小さくした v3（`assets/music/bgmer-train-timer-v3.*`）。アナウンス中の音量切り替えは廃止（BGMは常に同じ音量）
 - 描画を軽くした（景色は画像化、車輪の回転は停止）／画面ロック防止の取り直しと状態表示
-- 全路線の録音アナウンス（v24で山手線、v25で全路線、v26〜27で三鷹・吉祥寺・高円寺のイントネーション）
+- 全路線の録音アナウンス（v24で山手線、v25で全路線、v26〜27で三鷹・吉祥寺・高円寺のイントネーション、v28で全駅名を標準アクセントに）
 
 ## 未確認・未決
 - iPhone実機: 引っかかりは録音の声（山手線）で良くなったとの回答。全路線版（v25〜）は未確認。画面ロック防止の効きは回答なし（低電力モードでは効かない可能性）

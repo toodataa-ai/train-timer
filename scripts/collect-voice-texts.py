@@ -1,5 +1,6 @@
 """ride-preview.html から全アナウンス文を集めて JSON に出す。
 使い方: python3 scripts/collect-voice-texts.py 出力先.json [路線番号...]  (省略時は全9路線)
+駅名（漢字）と読みの一覧も 出力先.stations.json に出す（fix-voice-reading.py がアクセントに使う）
 必要: pip install playwright && playwright install chromium
 """
 import asyncio, json, subprocess, sys, time, pathlib
@@ -31,9 +32,11 @@ async def main():
             await page.goto('http://localhost:8815/ride-preview.html')
             await page.wait_for_timeout(500)
             result = await page.evaluate(JS, routes)
+            stations = await page.evaluate('() => { const m = {}; ROUTES.forEach(R => R.stations.forEach(s => m[s.name] = s.ruby)); return m; }')
             await browser.close()
     finally:
         server.kill()
     json.dump(result, open(sys.argv[1], 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    json.dump(stations, open(sys.argv[1].removesuffix('.json') + '.stations.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print({k: len(v) for k, v in result.items()}, 'unique:', len({t for v in result.values() for t in v}))
 asyncio.run(main())

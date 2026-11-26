@@ -1,5 +1,7 @@
 """読み・アクセントを直した音声を作り直す（build-voice.py の後に実行）。
-使い方: python3 scripts/fix-voice-reading.py ONNXRuntimeのso 辞書フォルダ 0.vvm
+使い方: python3 scripts/fix-voice-reading.py ONNXRuntimeのso 辞書フォルダ 0.vvm 文.stations.json
+- 駅名のアクセント: 文を駅名の漢字で作ったときのアクセント（辞書の標準アクセント）を使う。
+  読みは画面の読み（カタカナ）のまま。漢字だと読みが変わる駅（国立→コクリツ など）はカタカナのアクセントのまま
 - KANA_FIX: VOICEVOX の読み（カナ）を置き換える（例: ハチノヘが「ハチノエ」になる）
 - ACCENT: イントネーションを指定する駅名（利用者が聞き比べて選んだもの）
   値は (VOICEVOXのカナ, 下がる位置)。位置0は平ら（平板）、1は最初が高い（頭高）
@@ -7,7 +9,7 @@
 """
 import hashlib, json, pathlib, re, subprocess, sys, tempfile
 from voicevox_core.blocking import Onnxruntime, OpenJtalk, Synthesizer, VoiceModelFile
-ort, dic, vvm = sys.argv[1:4]
+ort, dic, vvm, stations_path = sys.argv[1:5]
 out = pathlib.Path(__file__).resolve().parent.parent / 'assets/voice/metan'
 manifest_path = out / 'manifest.json'
 manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
@@ -36,18 +38,38 @@ def set_accent(kana):
 syn = Synthesizer(Onnxruntime.load_once(filename=ort), OpenJtalk(dic))
 with VoiceModelFile.open(vvm) as model:
     syn.load_voice_model(model)
+def pron(kana): return re.sub(r"['/_、]", '', kana)
+kata = lambda s: ''.join(chr(ord(c) + 0x60) if 'ぁ' <= c <= 'ゖ' else c for c in s)
+# 漢字で渡しても読みが変わらない駅だけ、漢字に置き換えてアクセントを辞書に任せる
+KANJI, ALL = {}, set()
+for name, ruby in json.load(open(stations_path, encoding='utf-8')).items():
+    k = kata(ruby)
+    ALL.add(k)
+    if k in KANA_FIX or k in ACCENT or name == k: continue
+    if pron(syn.create_audio_query(name + 'です', 2).kana) == pron(syn.create_audio_query(k + 'です', 2).kana):
+        KANJI[k] = name
+# 駅名は全駅の中で長い順に照合する（ニシチバの中のチバを置き換えないように）
+NAME_RE = re.compile('|'.join(sorted(map(re.escape, ALL), key=len, reverse=True)))
+def swap(text, use): return NAME_RE.sub(lambda m: KANJI[m.group()] if m.group() in use else m.group(), text)
+def dict_kana(text):
+    base = syn.create_audio_query(text, 2).kana
+    names = {n for n in NAME_RE.findall(text) if n in KANJI}
+    # 漢字にすると文の中で読みが変わる駅（例: 水沢江刺→スイタク）は外す
+    use = {n for n in names if pron(syn.create_audio_query(swap(text, {n}), 2).kana) == pron(base)}
+    if not use: return base
+    k = syn.create_audio_query(swap(text, use), 2).kana
+    return k if pron(k) == pron(base) else base
 with tempfile.TemporaryDirectory() as tmp:
     wav = pathlib.Path(tmp) / 'v.wav'
     for text, old in list(manifest['clips'].items()):
         hits = [w for w in KANA_FIX if w in text]
-        if not hits and not any(w in text for w in ACCENT): continue
-        kana = syn.create_audio_query(text, 2).kana
+        kana = dict_kana(text)
         for w in hits:
             for a, b in KANA_FIX[w]: kana = kana.replace(a, b)
         kana = set_accent(kana)
         name = 'k' + hashlib.sha1(kana.encode()).hexdigest()[:11] + '.m4a'
-        print(text, '|', kana, '|', name)
         if name == old and (out / name).exists(): continue
+        print(text, '|', kana, '|', name)
         wav.write_bytes(syn.synthesis(syn.create_audio_query_from_kana(kana, 2), 2))
         subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', str(wav), '-af', 'loudnorm=I=-13:TP=-1:LRA=7',
                         '-ar', '44100', '-ac', '1', '-c:a', 'aac', '-b:a', '64k', '-movflags', '+faststart',
