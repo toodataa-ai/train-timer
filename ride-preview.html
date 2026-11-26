@@ -244,11 +244,42 @@ input[type=range]::-webkit-slider-thumb {
 .wire { position: absolute; left: 0; right: 0; bottom: 88px; height: 1px; background: rgba(40,45,60,.45); }
 .ride.moving .train svg { animation-duration: .5s; }
 @keyframes bob { 50% { transform: translateY(-.7px); } }
+/* 一画面レイアウト: 残り時間 → 電車 → 路線図 → 操作 */
+body { padding-top: 6px; }
+body > * { order: 7; flex-shrink: 0; }
+body > .preview-label { order: 0; margin-bottom: 4px; }
+body > .time-panel { order: 1; padding: 6px 14px; gap: 3px; margin-bottom: 6px; }
+body > .alert { order: 2; padding: 5px 8px; font-size: 12px; margin-bottom: 6px; }
+body > .ride { order: 3; margin-bottom: 8px; }
+body > .controls { order: 4; }
+body > .header { order: 5; }
+body > .route-note { order: 5; margin-top: -6px; }
+body > .route-selector { order: 6; }
+.time-main { font-size: clamp(52px, 17vw, 72px); font-weight: 400; }
+.time-panel .music-pace { display: none; }
+.progress-bar-bg { height: 8px; }
+.progress-wrap { gap: 2px; }
+.scene { height: clamp(140px, 25svh, 184px); }
+.sign { top: 8px; }
+.post { height: calc(100% - 62px); max-height: 112px; }
+.clouds { top: 54px; }
+.map-line { height: 128px; }
+.map-rail, .map-done { top: 24px; }
+.map-st { top: 19px; gap: 3px; }
+.map-train { top: 0; }
+.map-train::before { height: 14px; }
+.map-train::after { top: 15px; }
+.map-st span { max-height: none; }
+.controls { gap: 6px; }
+.controls .btn { padding: 12px; }
+.controls .btn-row { order: -1; }
+.toast { display: none; } /* 駅名は看板と路線図で表示。ボタンに重ならないよう非表示 */
+.map-line, .map-train { transition: none; }
 </style>
 </head>
 <body>
 
-<div class="preview-label">【テスト版2】走る電車と横の路線図</div>
+<div class="preview-label">【テスト版3】走る電車と横の路線図</div>
 <div class="route-selector">
   <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
@@ -1234,8 +1265,7 @@ function buildRide() {
   line.style.width = (N * MAP_GAP) + 'px';
   line.innerHTML = '<div class="map-rail" style="width:' + ((N-1)*MAP_GAP) + 'px"></div><div class="map-done" id="mapDone"></div>'
     + STATIONS.map((st, i) => {
-      const len = st.name.length > 8 ? 'xlong' : st.name.length > 6 ? 'long' : '';
-      return `<div class="map-st${st.ms?' key':''}" id="map${i}" style="left:${i*MAP_GAP}px"><i></i><em>${st.num}</em><span class="${len}">${st.name}</span></div>`;
+      return `<div class="map-st${st.ms?' key':''}" id="map${i}" style="left:${i*MAP_GAP}px"><i></i><em>${st.num}</em><span style="font-size:${Math.min(13, 68/st.name.length).toFixed(1)}px">${st.name}</span></div>`;
     }).join('')
     + '<div class="map-train" id="mapTrain"></div>';
   rideSeg = -1;
@@ -1322,6 +1352,7 @@ function handleStart() {
     // 5秒試聴の終了タイマーが本番再生を途中で止めないようにする
     if (musicPreviewing) stopMusic();
     running = true;
+    window.scrollTo({top:0, behavior:'smooth'});
     setScreenWakeDesired(true);
     updateMusicPhase();
     // startTime = 「今この瞬間にremainMsだけ残っている」基準点
