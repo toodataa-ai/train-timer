@@ -380,11 +380,10 @@ body.enoden { --accent: #4fb878; }
 .couple-chip { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); z-index: 6; background: rgba(20,24,36,.85); color: #fff; font-size: 12px; font-weight: 900; padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
 .couple-chip[hidden] { display: none; }
 /* 終点に着いたら、画面を切り替えずに景色の中に到着の札を出す */
-.arrive-chip { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 7; width: max-content; max-width: 92%;
+.arrive-chip { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); z-index: 7; width: max-content; max-width: 92%;
   background: rgba(255,255,255,.96); color: #1c2233; border-radius: 12px; border-bottom: 4px solid var(--accent);
   padding: 4px 12px; text-align: center; box-shadow: 0 3px 12px rgba(0,0,0,.25); }
 .arrive-chip b { display: block; font-size: 14px; }
-.arrive-chip small { display: block; font-size: 10px; font-weight: 700; color: #697089; margin-top: 2px; }
 .arrive-chip[hidden] { display: none; }
 @media (max-height: 600px) { .scene { height: 188px; } }
 .speedlines { position: absolute; left: 0; right: 0; bottom: 52px; height: 50px; z-index: 2; opacity: 0; pointer-events: none; background: repeating-linear-gradient(180deg, transparent 0 11px, rgba(255,255,255,.75) 11px 12px, transparent 12px 17px); -webkit-mask-image: repeating-linear-gradient(90deg, transparent 0 30px, #000 80px, transparent 130px); mask-image: repeating-linear-gradient(90deg, transparent 0 30px, #000 80px, transparent 130px); -webkit-mask-size: 130px 100%; mask-size: 130px 100%; animation: rush .22s linear infinite; animation-play-state: paused; }
@@ -520,7 +519,7 @@ body > .wake-panel[hidden] { display: none; }
     <div class="layer front" id="land-front"></div>
     <div class="world" id="world"></div>
     <div class="hud"><div><small>まえの えき</small><b id="signFrom"></b></div><div><small id="signToLabel">つぎは</small><b id="signTo"></b></div></div>
-    <div class="arrive-chip" id="arriveChip" hidden><b id="arriveTitle"></b><small id="arriveMsg"></small></div>
+    <div class="arrive-chip" id="arriveChip" hidden><b id="arriveTitle"></b></div>
     <div class="speedlines"></div>
     <div class="couple-chip" id="coupleChip" hidden></div>
     <div class="train-track"><div class="train" id="partnerTrain" hidden><svg id="partnerSvg" viewBox="0 -9 450 72"></svg></div><div class="train" id="rideTrain">
@@ -2182,8 +2181,7 @@ function finish() {
   const r = ROUTES[routeIdx];
   const tripMin = Math.round(totalMs / 60000);
   document.getElementById('arriveTitle').textContent = r.endTitle;
-  document.getElementById('arriveMsg').textContent = tripMin + 'ふんの旅、おつかれさま。後片付けしようね！';
-  ['arriveTitle','arriveMsg'].forEach(id => addFurigana(document.getElementById(id)));
+  addFurigana(document.getElementById('arriveTitle'));
   document.getElementById('arriveChip').hidden = false;
   document.getElementById('startBtn').textContent = '🔄 もういちど';
   if (announceOn) {
