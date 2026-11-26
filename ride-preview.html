@@ -327,10 +327,6 @@ rt { font-size: 9px; font-weight: 700; line-height: 1.1; }
 .far { bottom: 98px; height: 62px; animation-duration: 75s; opacity: .85; }
 .mid { bottom: 54px; height: 76px; animation-duration: 34s; }
 .front { bottom: 0; height: 48px; animation-duration: 13s; z-index: 4; }
-.ride.moving .scene[data-phase="1"] .mid { animation-duration: 26s; }
-.ride.moving .scene[data-phase="2"] .mid { animation-duration: 20s; }
-.ride.moving .scene[data-phase="1"] .front { animation-duration: 10s; }
-.ride.moving .scene[data-phase="2"] .front { animation-duration: 7s; }
 .scene[data-phase="1"] .layer.far, .scene[data-phase="1"] .layer.mid, .scene[data-phase="1"] .layer.front { filter: sepia(.35) saturate(1.2); }
 .scene[data-phase="2"] .layer.far, .scene[data-phase="2"] .layer.mid, .scene[data-phase="2"] .layer.front { filter: brightness(.55) saturate(.9) hue-rotate(-12deg); }
 .viaduct { position: absolute; left: 0; right: 0; bottom: 46px; height: 21px; background: linear-gradient(#c6c9d0 0 11px, #f0f1f4 11px 13px, #8b909c 13px); }
@@ -386,11 +382,14 @@ body.enoden { --accent: #4fb878; }
 .couple-chip { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); z-index: 6; background: rgba(20,24,36,.85); color: #fff; font-size: 12px; font-weight: 900; padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
 .couple-chip[hidden] { display: none; }
 @media (max-height: 600px) { .scene { height: 188px; } }
+.speedlines { position: absolute; left: 0; right: 0; bottom: 52px; height: 50px; z-index: 2; opacity: 0; pointer-events: none; background: repeating-linear-gradient(180deg, transparent 0 11px, rgba(255,255,255,.75) 11px 12px, transparent 12px 17px); -webkit-mask-image: repeating-linear-gradient(90deg, transparent 0 30px, #000 80px, transparent 130px); mask-image: repeating-linear-gradient(90deg, transparent 0 30px, #000 80px, transparent 130px); -webkit-mask-size: 130px 100%; mask-size: 130px 100%; animation: rush .22s linear infinite; animation-play-state: paused; }
+@keyframes rush { to { -webkit-mask-position: -130px 0; mask-position: -130px 0; } }
+.ride.moving .scene[data-fast="1"] .speedlines { opacity: .8; animation-play-state: running; }
 </style>
 </head>
 <body>
 
-<div class="preview-label">【テスト版13】はやぶさ・こまち・江ノ電</div>
+<div class="preview-label">【テスト版14】実物の速さ・駅・車両</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -482,6 +481,7 @@ body.enoden { --accent: #4fb878; }
     <div class="layer front" id="land-front"></div>
     <div class="world" id="world"></div>
     <div class="hud"><div><small>まえの えき</small><b id="signFrom"></b></div><div><small>つぎは</small><b id="signTo"></b></div></div>
+    <div class="speedlines"></div>
     <div class="couple-chip" id="coupleChip" hidden></div>
     <div class="train-track"><div class="train" id="partnerTrain" hidden><svg id="partnerSvg" viewBox="0 -9 450 72"></svg></div><div class="train" id="rideTrain">
       <svg id="trainSvg" viewBox="0 -9 232 72"></svg>
@@ -544,10 +544,10 @@ const ROUTES = [
     stations:[
       {name:'博多',  ruby:'はかた',      num:'SK01',ms:'key'},{name:'小倉',  ruby:'こくら',      num:'SK02',ms:'key'},
       {name:'広島',  ruby:'ひろしま',    num:'SK03',ms:'key'},{name:'岡山',  ruby:'おかやま',    num:'SK04',ms:'key'},
-      {name:'姫路',  ruby:'ひめじ',      num:'SK05',ms:null},{name:'西明石', ruby:'にしあかし',  num:'SK06',ms:null},
-      {name:'新神戸',ruby:'しんこうべ',  num:'SK07',ms:'key'},{name:'新大阪',ruby:'しんおおさか',num:'SK08',ms:'key'},
-      {name:'京都',  ruby:'きょうと',    num:'SK09',ms:'key'},{name:'名古屋',ruby:'なごや',      num:'SK10',ms:'key'},
-      {name:'新横浜',ruby:'しんよこはま',num:'SK11',ms:'key'},{name:'東京',  ruby:'とうきょう',  num:'SK12',ms:'key'},
+      {name:'姫路',  ruby:'ひめじ',      num:'SK05',ms:null},{name:'新神戸',ruby:'しんこうべ',  num:'SK06',ms:'key'},
+      {name:'新大阪',ruby:'しんおおさか',num:'SK07',ms:'key'},{name:'京都',  ruby:'きょうと',    num:'SK08',ms:'key'},
+      {name:'名古屋',ruby:'なごや',      num:'SK09',ms:'key'},{name:'新横浜',ruby:'しんよこはま',num:'SK10',ms:'key'},
+      {name:'品川',  ruby:'しながわ',    num:'SK11',ms:'key'},{name:'東京',  ruby:'とうきょう',  num:'SK12',ms:'key'},
     ]
   },
   {
@@ -1328,6 +1328,11 @@ const TRAIN_STYLES = [
 ];
 const CAR = 110; // 1両の長さ（図の中の単位）
 const trainUnits = cars => cars * CAR + 10;
+function bogie(c) {
+  let o = `<rect x="${c-14}" y="49" width="28" height="4" rx="1.5" fill="#2b2f39"/>`;
+  [c-8,c+8].forEach(x => o += `<g class="wheel"><circle cx="${x}" cy="55" r="5" fill="#23262e" stroke="#8d94a3" stroke-width="1.2"/><path d="M${x-3.5} 55h7" stroke="#8d94a3" stroke-width="1"/></g>`);
+  return o;
+}
 // 1両分を描く。右向きの先頭車を基本にし、最後尾は左右反転して使う
 function carSVG(idx, end, uid, panta) {
   const [body, top, band, thin, kind] = TRAIN_STYLES[idx];
@@ -1377,10 +1382,7 @@ function carSVG(idx, end, uid, panta) {
   o += `<path d="${shape}" fill="none" stroke="#4b515f" stroke-width="1"/>`;
   if (end) { const lx = kind==='bullet' ? 98 : kind==='express' ? 102 : 103; o += `<ellipse class="lamp" cx="${lx}" cy="39.5" rx="3" ry="1.8" fill="${end==='tail'?'#ff4a55':'#fffbe0'}"/>`; }
   o += rect(3,47,end?98:104,2.8,'#2f333e') + rect(40,49,28,6,'#474d5a',1);
-  [20,86].forEach(c => {
-    o += rect(c-14,49,28,4,'#2b2f39',1.5);
-    [c-8,c+8].forEach(x => o += `<g class="wheel"><circle cx="${x}" cy="55" r="5" fill="#23262e" stroke="#8d94a3" stroke-width="1.2"/><path d="M${x-3.5} 55h7" stroke="#8d94a3" stroke-width="1"/></g>`);
-  });
+  if (kind !== 'retro') o += bogie(20) + bogie(86);
   return o;
 }
 function trainSVG(idx, cars, prefix) {
@@ -1390,9 +1392,17 @@ function trainSVG(idx, cars, prefix) {
   o += `<ellipse cx="${cars*CAR/2}" cy="60" rx="${cars*CAR/2}" ry="3" fill="#000" opacity=".22"/>`;
   for (let i = 0; i < cars; i++) {
     const end = i === cars-1 ? 'head' : i === 0 ? 'tail' : '';
-    if (i) o += `<rect x="${i*CAR-4}" y="14" width="8" height="32" fill="#4a4f5c"/>`;
+    const retro = TRAIN_STYLES[idx][4] === 'retro';
+    if (i && !retro) o += `<rect x="${i*CAR-4}" y="14" width="8" height="32" fill="#4a4f5c"/>`;
+    // 連接車: 組の中は幌でつながり、組と組の間は連結器だけ
+    if (retro && i % 2) o += `<rect x="${i*CAR-6}" y="13" width="12" height="34" fill="#3b4049"/><path d="M${i*CAR-2} 13v34M${i*CAR+2} 13v34" stroke="#717886" stroke-width="1"/>`;
+    if (retro && i && !(i % 2)) o += `<rect x="${i*CAR-5}" y="43" width="10" height="3" fill="#2b2f39"/>`;
     const mirror = end === 'tail' ? `translate(${(i+1)*CAR} 0) scale(-1 1)` : `translate(${i*CAR} 0)`;
-    o += `<g transform="${mirror}">${carSVG(idx, end, prefix+i, i === 1)}</g>`;
+    o += `<g transform="${mirror}">${carSVG(idx, end, prefix+i, i === Math.max(1, cars-3))}</g>`;
+  }
+  if (TRAIN_STYLES[idx][4] === 'retro') {
+    // 2両ごとに、前後の台車と、つなぎ目を支える台車の3つ
+    for (let i = 0; i < cars; i += 2) o += bogie(i*CAR+22) + bogie((i+1)*CAR) + bogie((i+2)*CAR-22);
   }
   return o;
 }
@@ -1407,6 +1417,7 @@ function coupleInfo() {
   const side = (routeIdx === 4) === down ? 1 : -1; // 相手が右(+1)か左(-1)か
   return {...c, down, join, side};
 }
+const carCount = idx => idx === 1 ? 8 : 4; // のぞみは長く見せる（実際は16両）
 function drawTrain(el, svg, idx, cars, k, prefix) {
   const units = trainUnits(cars);
   svg.setAttribute('viewBox', `0 -9 ${units} 72`);
@@ -1416,7 +1427,7 @@ function drawTrain(el, svg, idx, cars, k, prefix) {
 let trainScale = 0.5, trainSceneWidth = 0;
 function buildTrains() {
   const c = coupleInfo(), width = document.getElementById('scene').clientWidth || 360;
-  const cars = c ? c.cars : 4;
+  const cars = c ? c.cars : carCount(routeIdx);
   const all = c ? trainUnits(c.cars) + trainUnits(c.partnerCars) : trainUnits(4);
   trainScale = Math.min(c ? 0.45 : 0.52, (width-8)/all);
   trainSceneWidth = width;
@@ -1430,8 +1441,9 @@ function placeTrains(pos) {
   if (width !== trainSceneWidth) buildTrains();
   const c = coupleInfo(), own = document.getElementById('rideTrain'), partner = document.getElementById('partnerTrain');
   const chip = document.getElementById('coupleChip');
-  const w = trainUnits(c ? c.cars : 4) * trainScale;
-  if (!c) { own.style.left = ((width-w)/2) + 'px'; chip.hidden = true; return; }
+  const w = trainUnits(c ? c.cars : carCount(routeIdx)) * trainScale;
+  // 画面より長い編成は、先頭を右端の近くに置く
+  if (!c) { own.style.left = (w > width ? width - w - 8 : (width-w)/2) + 'px'; chip.hidden = true; return; }
   const pw = trainUnits(c.partnerCars) * trainScale, overlap = 9 * trainScale;
   // 0 = 連結中, 1 = 完全に離れている。盛岡の前後0.6駅ぶんで切り替える
   const raw = Math.max(0, Math.min(1, (c.down ? pos - c.join : c.join - pos) / 0.6));
@@ -1452,18 +1464,88 @@ function coupleSpeech(idx) {
   return c.down ? `ここで${other}と切り離します。` : `${other}と連結しました。`;
 }
 
+// 駅から次の駅までのおおよその所要時間（分）。画面の駅間はこの比率で変える
+const SEG_MINUTES = [
+  [2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,3,3,3,2,2,2,3,2,2,3,2,2,2,3,2],
+  [16,47,35,20,16,13,14,35,79,11,7],
+  [3,3,4,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,5,5,4,2],
+  [9,10,8,6,17,15,12,9,5,20,30,9,12,13],
+  [5,19,13,9,12,8,10,12,10,12,11,6,8,8,7,6,11,11,11,13,11,13],
+  [5,19,13,9,8,8,10,8,9,12,11,12,13,14,11,9,13,10,9,9,9,8,12],
+  [2,2,2,2,2,2,2,2,2,2,3,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [5,19,13,9,12,8,10,12,10,12,11,6,8,8,7,6,11,12,22,15,12,31],
+  [2,2,2,2,3,3,3,2,4,3,3,2,1,2],
+];
+const ROUTE_SPEED = [90,285,95,120,300,260,90,300,40]; // 画面の速さの目安（km/h）
+const forwardSeg = seg => routeDir[routeIdx] ? SEG_MINUTES[routeIdx].length-1-seg : seg;
+function segSpeed(seg) {
+  const k = forwardSeg(seg), r = routeIdx;
+  if ((r===4 || r===5 || r===7) && k < 2) return 120;   // 東京〜大宮はゆっくり
+  if (r===4 && k >= 17) return 260;                     // 盛岡より北
+  if (r===7 && k >= 17) return 110;                     // こまちは盛岡から在来線の区間
+  if (r===1 && k === 10) return 110;
+  if (r===1 && k === 9) return 150;
+  if (r===8 && k === 5) return 25;                      // 江ノ島〜腰越は道路の上
+  return ROUTE_SPEED[r];
+}
+// 駅iに着くのは、全体の時間のうち cum[i] の割合がすぎたとき
+let timelineCache = null;
+function timeline() {
+  if (timelineCache && timelineCache.stations === STATIONS) return timelineCache.cum;
+  const mins = SEG_MINUTES[routeIdx];
+  const mean = mins.reduce((a,b) => a+b, 0) / mins.length;
+  // 短すぎる区間は、アナウンスが重ならないように少し長くする
+  const w = Array.from({length: N-1}, (_, i) => Math.max(mins[forwardSeg(i)], mean*0.45));
+  const total = w.reduce((a,b) => a+b, 0);
+  const cum = [0];
+  w.forEach(v => cum.push(cum[cum.length-1] + v/total));
+  cum[N-1] = 1;
+  timelineCache = {stations: STATIONS, cum, w, mean};
+  return cum;
+}
+function posAt(progress) {
+  const cum = timeline(), p = Math.max(0, Math.min(1, progress));
+  let i = 0;
+  while (i < N-2 && p >= cum[i+1] - 1e-9) i++;
+  return i + Math.max(0, Math.min(1, (p - cum[i]) / (cum[i+1] - cum[i])));
+}
+function timeAt(pos) {
+  const cum = timeline(), i = Math.max(0, Math.min(N-2, Math.floor(pos + 1e-9)));
+  return cum[i] + (pos - i) * (cum[i+1] - cum[i]);
+}
+// 速い電車ほど、景色と線路を速く流す
+let speedKey = '', speedAt = 0;
+function applySpeed(seg) {
+  const scene = document.getElementById('scene'), v = segSpeed(seg);
+  scene.setAttribute('data-fast', v >= 200 ? '1' : '0');
+  const key = routeIdx + ':' + v + ':' + running, now = Date.now();
+  if (!scene.getAnimations || (key === speedKey && now - speedAt < 700)) return;
+  speedKey = key; speedAt = now;
+  const rate = Math.pow(v/90, 1.25);
+  scene.getAnimations({subtree:true}).forEach(a => {
+    const name = a.animationName;
+    if (name !== 'scroll3' && name !== 'ties' && name !== 'spin') return;
+    const r = name === 'scroll3' ? rate : Math.min(1.7, rate); // 線路と車輪は速すぎると止まって見える
+    if (Math.abs(a.playbackRate - r) > 0.01) a.updatePlaybackRate ? a.updatePlaybackRate(r) : (a.playbackRate = r);
+  });
+}
+
 // 駅は1駅ごとに固定の位置へ並べ、全体を一定速度で流す（途中で入れ替えない）。
 // 移動はブラウザのアニメーション機能に任せ、読み上げなどで処理が詰まっても止まりにくくする。
-let worldAnim = null, worldSpacing = 0;
+let worldAnim = null, worldSpacing = 0, worldX = [];
 function stopWorld() { if (worldAnim) { worldAnim.cancel(); worldAnim = null; } }
 function moveWorld(pos, seg) {
   const world = document.getElementById('world');
-  const spacing = (document.getElementById('scene').clientWidth || 360) * 0.9;
-  if (spacing !== worldSpacing) {
-    stopWorld(); worldSpacing = spacing;
+  const width = document.getElementById('scene').clientWidth || 360;
+  const cum = timeline();
+  if (width !== worldSpacing) {
+    stopWorld(); worldSpacing = width; worldX = [0];
+    const {w, mean} = timelineCache;
+    // 駅の間の長さ = 時間 × 速さ（近すぎる駅は画面1枚分ほど離す）
+    for (let i = 0; i < N-1; i++) worldX.push(worldX[i] + width*0.9*Math.max(1, (w[i]/mean) * (segSpeed(i)/90)));
     for (let i = 0; i < N; i++) {
       const el = document.getElementById('world'+i);
-      if (el) el.style.marginLeft = (i*spacing) + 'px';
+      if (el) el.style.marginLeft = worldX[i] + 'px';
     }
   }
   // 画面の近くの駅だけ描画する
@@ -1471,11 +1553,12 @@ function moveWorld(pos, seg) {
     const el = document.getElementById('world'+i);
     if (el) el.style.visibility = (i >= seg-1 && i <= seg+3) ? 'visible' : 'hidden';
   }
-  const at = p => `translate3d(${(-p*spacing).toFixed(2)}px,0,0)`;
-  if (!running || !world.animate) { stopWorld(); world.style.transform = at(pos); return; }
+  const at = x => `translate3d(${(-x).toFixed(2)}px,0,0)`;
+  const here = worldX[seg] + (pos - seg) * (worldX[seg+1] - worldX[seg]);
+  if (!running || !world.animate) { stopWorld(); world.style.transform = at(here); return; }
   const elapsed = totalMs - remainMs;
   if (!worldAnim) {
-    worldAnim = world.animate([{transform: at(0)}, {transform: at(N-1)}], {duration: totalMs, easing: 'linear', fill: 'forwards'});
+    worldAnim = world.animate(worldX.map((x,i) => ({transform: at(x), offset: cum[i]})), {duration: totalMs, easing: 'linear', fill: 'forwards'});
     worldAnim.currentTime = elapsed;
   } else if (Math.abs(worldAnim.currentTime - elapsed) > 2000) {
     worldAnim.currentTime = elapsed;
@@ -1493,9 +1576,9 @@ let barPoints = [];
 function buildBar() {
   barPoints = [0, ...BAR_STATIONS[routeIdx].map(n => STATIONS.findIndex(s => s.name === n)).sort((a,b) => a-b), N-1];
   document.getElementById('barDots').innerHTML = barPoints.slice(1,-1).map(i =>
-    `<i class="bar-dot" id="barDot${i}" style="left:${i/(N-1)*100}%"></i>`).join('');
+    `<i class="bar-dot" id="barDot${i}" style="left:${timeline()[i]*100}%"></i>`).join('');
   document.getElementById('barNames').innerHTML = barPoints.map(i =>
-    `<span class="bar-name${i===0?' first':i===N-1?' last':''}" id="barName${i}" style="left:${i/(N-1)*100}%">${kana(STATIONS[i])}</span>`).join('');
+    `<span class="bar-name${i===0?' first':i===N-1?' last':''}" id="barName${i}" style="left:${timeline()[i]*100}%">${kana(STATIONS[i])}</span>`).join('');
   layoutBarNames();
 }
 // 進行バーのつまみで、旅の途中の地点へ移動する
@@ -1525,7 +1608,7 @@ function layoutBarNames() {
   if (!width) return;
   const items = barPoints.map(i => {
     const el = document.getElementById('barName'+i), w = el.offsetWidth;
-    return {el, w, x: Math.max(0, Math.min(width-w, i/(N-1)*width - w/2))};
+    return {el, w, x: Math.max(0, Math.min(width-w, timeline()[i]*width - w/2))};
   });
   for (let k = 1; k < items.length; k++) items[k].x = Math.max(items[k].x, items[k-1].x + items[k-1].w + 4);
   for (let k = items.length-1; k >= 0; k--) {
@@ -1632,7 +1715,7 @@ const ROUTE_LAND = [
   // 総武線: 三鷹→千葉
   spread(['town',6],['city',13],['river',1],['city',3],['river',1],['town',1],['river',1],['town',12]),
   // のぞみ: 博多→東京
-  ['mountain','sea','mountain','rural','town','sea','city','town','lake','fuji','city'],
+  ['mountain','sea','mountain','rural','sea','city','town','lake','fuji','city','tokyo'],
   // 中央線: 高尾→東京
   spread(['mountain',1],['town',3],['river',1],['town',13],['city',2],['park',1],['tokyo',2]),
   // あずさ: 松本→新宿
@@ -1649,7 +1732,7 @@ const ROUTE_LAND = [
   spread(['town',6],['sea',3],['mountain',2],['town',3]),
 ];
 // 新幹線・特急は、大きな駅の前後だけ街の風景にする
-const CITY_STATIONS = {'東京':'tokyo','博多':'city','広島':'city','名古屋':'city','新大阪':'city','仙台':'city','新宿':'city',
+const CITY_STATIONS = {'品川':'tokyo','東京':'tokyo','博多':'city','広島':'city','名古屋':'city','新大阪':'city','仙台':'city','新宿':'city',
   '小倉':'city','岡山':'city','京都':'town','姫路':'town','宇都宮':'town','郡山':'town','福島':'town','盛岡':'town','高崎':'town','長野':'town','富山':'town','金沢':'town','福井':'town','秋田':'town','松本':'town','甲府':'town','八戸':'town','新青森':'town'};
 function landAt(pos) {
   const seg = Math.max(0, Math.min(N-2, Math.floor(pos + 1e-9)));
@@ -1704,7 +1787,7 @@ function buildRide() {
 
 function renderRide(progress) {
   if (N < 2) return;
-  const pos = Math.max(0, Math.min(1, progress)) * (N-1);
+  const pos = posAt(progress);
   const seg = Math.min(N-2, Math.floor(pos + 1e-9));
   const frac = Math.max(0, Math.min(1, pos - seg));
   const arrived = progress >= 1;
@@ -1712,10 +1795,11 @@ function renderRide(progress) {
   document.getElementById('scene').setAttribute('data-phase', progress >= 0.8 ? '2' : progress >= 0.5 ? '1' : '0');
   moveWorld(pos, seg);
   placeTrains(pos);
+  applySpeed(seg);
   updateLand(pos);
   renderBar(pos);
   const seek = document.getElementById('seekSlider');
-  if (seek && !seeking) seek.value = Math.round(pos / (N-1) * 1000);
+  if (seek && !seeking) seek.value = Math.round(Math.max(0, Math.min(1, progress)) * 1000);
   if (seg !== rideSeg || arrived) {
     document.getElementById('signFrom').innerHTML = kana(STATIONS[seg]);
     document.getElementById('signTo').innerHTML = kana(STATIONS[seg+1]);
@@ -1759,12 +1843,12 @@ function applySlider(val) {
 
 function computeThresholds() {
   // thresholds[i] = 駅iになった時点のremainMs
-  thresholds = STATIONS.map((_, i) => totalMs * (N-1-i) / (N-1));
+  thresholds = timeline().map(c => totalMs * (1-c));
 }
 
 function refreshStationTimes() {
   STATIONS.forEach((_, i) => {
-    const ms = Math.round(totalMs * (N-1-i) / (N-1));
+    const ms = Math.round(totalMs * (1 - timeline()[i]));
     const m = Math.floor(ms/60000), s = Math.floor((ms%60000)/1000);
     const el = document.getElementById('st'+i+'time');
     if (el) el.textContent = i===N-1 ? '0:00' : m+':'+String(s).padStart(2,'0');
@@ -1863,7 +1947,7 @@ function renderDisplay() {
   td.style.color = pct > 0.5 ? 'var(--text)' : col;
 
   // アナウンス閾値と表示の駅切替を一致させ、到着前に終点表示しない
-  const stIdx = Math.min(N-1, Math.floor((1-pct)*(N-1) + 1e-9));
+  const stIdx = timeline().filter(c => c <= (1-pct) + 1e-9).length - 1;
   document.getElementById('passedCount').textContent = 'とおった ' + stIdx + 'えき';
   document.getElementById('remainCount').textContent = 'あと ' + (N-stIdx-1) + 'えき';
   document.getElementById('currentStation').textContent = '📍 ' + STATIONS[stIdx].name;
