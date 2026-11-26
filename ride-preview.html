@@ -319,7 +319,7 @@ rt { font-size: 9px; font-weight: 700; line-height: 1.1; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版6】走る電車と横の路線図</div>
+<div class="preview-label">【テスト版7】走る電車と横の路線図</div>
 <div class="route-selector">
   <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
@@ -1120,7 +1120,15 @@ if (window.speechSynthesis) {
   loadVoices();
 }
 
+// 読み上げでは駅名を読み仮名（カタカナ）に置き換える（例: 小倉を「おぐら」と読ませない）
+function toSpeechText(text) {
+  const dict = {};
+  STATIONS.forEach(s => { dict[s.name] = s.ruby.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60)); });
+  const names = Object.keys(dict).sort((a,b) => b.length - a.length);
+  return names.length ? text.replace(new RegExp(names.join('|'), 'g'), n => dict[n]) : text;
+}
 function speakText(text) {
+  text = toSpeechText(text);
   if (!window.speechSynthesis || !announceOn) return;
   try {
     speechSynthesis.cancel();
