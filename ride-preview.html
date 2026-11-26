@@ -431,7 +431,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版33】終点で駅に停車・「到着しました」のアナウンス・注意の表示で画面がずれないように・八王子を平らに</div>
+<div class="preview-label">【テスト版34】終点で駅に停車・「到着しました」のアナウンス・注意の表示で画面がずれないように・八王子を平らに・のぞみを5両に</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -1560,7 +1560,7 @@ function coupleInfo() {
   const side = (routeIdx === 4) === down ? 1 : -1; // 相手が右(+1)か左(-1)か
   return {...c, down, join, side};
 }
-const carCount = idx => idx === 1 ? 8 : 4; // のぞみは長く見せる（実際は16両）
+const carCount = idx => idx === 1 ? 5 : 4; // のぞみは少し長く見せる（実際は16両。8両は長すぎたので5両）
 function drawTrain(el, svg, idx, cars, k, prefix) {
   const units = trainUnits(cars);
   svg.setAttribute('viewBox', `0 -9 ${units} 72`);
