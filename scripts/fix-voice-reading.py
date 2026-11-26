@@ -18,9 +18,22 @@ KANA_FIX = {'ハチノヘ': [("ハチ'/ノ'/エ'", "ハ'チノヘ"), ("ハチノ
 ACCENT = {'ミタカ': ('ミタカ', 0), 'キチジョウジ': ('_キチジョオジ', 0),  # 平ら（v26）
           'クニタチ': ('クニタチ', 0),  # 平ら（v30）
           'ハチオウジ': ('ハチオウジ', 0),  # 平ら（v33。西八王子は含まない）
+          'カクノダテ': ('カクノダテ', 3),  # 大曲（オオマ↓ガリ）と同じく3拍目のあとで下がる「カクノ↓ダテ」（2026-11-26）
           'コウエンジ': ('コオエンジ', 1)}  # 最初が高い（v27）
 def set_accent(kana):
     parts = re.split(r'([/、])', kana)
+    # カタカナの駅名が「カ'クノ/ダ'テ」のように切れていたら、一つのまとまりにつなぐ
+    i = 0
+    while i < len(parts):
+        plain = parts[i].replace("'", '')
+        for w, _ in ACCENT.values():
+            if plain.startswith(w) or not plain or not w.startswith(plain): continue
+            acc, j = plain, i
+            while len(acc) < len(w) and j + 2 < len(parts) and parts[j + 1] == '/':
+                j += 2; acc += parts[j].replace("'", '')
+            if acc.startswith(w):
+                parts[i:j + 1] = [acc]; break
+        i += 1
     for i, p in enumerate(parts):
         plain = p.replace("'", '')
         for w, pos in ACCENT.values():
