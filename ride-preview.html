@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>あそびタイマー🚃｜走る電車テスト版</title>
+<title>あそびタイマー🚃｜BGMテスト版</title>
 <style>
 :root {
   --yellow: #f5c800;
@@ -319,7 +319,7 @@ rt { font-size: 9px; font-weight: 700; line-height: 1.1; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版7】走る電車と横の路線図</div>
+<div class="preview-label">【テスト版8】BGM差し替え</div>
 <div class="route-selector">
   <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
@@ -366,15 +366,15 @@ rt { font-size: 9px; font-weight: 700; line-height: 1.1; }
   <button type="button" class="btn-audio-test" id="testMusicBtn" onclick="testMusic()">🎧 音楽をためす（5秒）</button>
   <span id="musicStatus" role="status" aria-live="polite">BGM：準備OK</span>
 </div>
-<div class="audio-hint">🎶 前半は楽しく、半分で疾走BGM、残り20%でラストスパート！</div>
+<div class="audio-hint">🎶 前半は楽しく、半分でBGMチェンジ、残り20%でラストスパート！</div>
 <details class="music-credits">
   <summary>使用BGM・音源の状態</summary>
   <div id="bgmerAvailability" role="status">フリー音源の準備状況を確認しています…</div>
   <div>使用予定の楽曲（音楽：<a href="https://bgmer.net/" target="_blank" rel="noopener">BGMer</a>）</div>
   <ol>
     <li><a href="https://bgmer.net/music/277/" target="_blank" rel="noopener">並走ハピネス</a>：前半</li>
-    <li><a href="https://bgmer.net/music/251/" target="_blank" rel="noopener">グルーヴコースター</a>：残り50%から</li>
-    <li><a href="https://bgmer.net/music/148/" target="_blank" rel="noopener">爆発寸前！</a>：残り20%から</li>
+    <li><a href="https://bgmer.net/music/439/" target="_blank" rel="noopener">遊覧飛行</a>：残り50%から</li>
+    <li><a href="https://bgmer.net/music/251/" target="_blank" rel="noopener">グルーヴコースター</a>：残り20%から</li>
   </ol>
 </details>
 <div class="wake-panel" id="wakePanel" hidden>
@@ -816,8 +816,8 @@ const MUSIC_CHORDS = [
 const MUSIC_BASS = [130.81,98,110,87.31];
 // 公式サイトから手動入手したSHORT版3曲をローカルで連結した音源だけを使用。
 // ファイル未設置の場合、既存の自作BGMを維持する（無音・無許可の直リンクは禁止）。
-const BGMER_BUNDLE_MANIFEST = 'assets/music/bgmer-train-timer.json';
-const BGMER_TRACK_TITLES = ['並走ハピネス', 'グルーヴコースター', '爆発寸前！'];
+const BGMER_BUNDLE_MANIFEST = 'assets/music/bgmer-train-timer-v2.json';
+const BGMER_TRACK_TITLES = ['並走ハピネス', '遊覧飛行', 'グルーヴコースター'];
 let bgmerBundle = null;
 let bgmerBundleLoading = false;
 let musicUsingBGMer = false;
@@ -832,11 +832,11 @@ function musicStageRate(phase) {
 }
 function musicStageLabel(phase) {
   return musicUsingBGMer
-    ? ['🎵 並走ハピネス（前半）','⚡ グルーヴコースター（後半）','🔥 爆発寸前！（ラスト）'][phase]
+    ? ['🎵 並走ハピネス（前半）','⚡ 遊覧飛行（後半）','🔥 グルーヴコースター（ラスト）'][phase]
     : MUSIC_PHASE_LABELS[phase];
 }
 function validateBGMerBundle(data) {
-  if (!data || data.version !== 1 || data.file !== 'bgmer-train-timer.m4a' ||
+  if (!data || data.version !== 1 || data.file !== 'bgmer-train-timer-v2.m4a' ||
       !Array.isArray(data.tracks) || data.tracks.length !== 3) return false;
   return data.tracks.every((track, index) =>
     track.title === BGMER_TRACK_TITLES[index] &&
@@ -1495,7 +1495,7 @@ function handleStart() {
     // 5秒試聴の終了タイマーが本番再生を途中で止めないようにする
     if (musicPreviewing) stopMusic();
     running = true;
-    window.scrollTo({top:0, behavior:'smooth'});
+    if (window.scrollTo) window.scrollTo({top:0, behavior:'smooth'});
     setScreenWakeDesired(true);
     updateMusicPhase();
     // startTime = 「今この瞬間にremainMsだけ残っている」基準点
