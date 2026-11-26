@@ -415,7 +415,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版22】声・動き・画面ロック</div>
+<div class="preview-label">【テスト版23】読み上げ後の引っかかり調整</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -1174,8 +1174,8 @@ function stopMusic() {
 }
 function duckMusic(isSpeaking) {
   if (!musicAudio || musicAudio.paused) return;
-  // iPhoneではvolume設定が無視される場合があります。その際は端末の音量を使用
-  try { musicAudio.volume = isSpeaking ? 0.10 : 0.75; } catch(e) {}
+  // 読み上げの前後で音量は切り替えない（戻す瞬間に画面が引っかかるため。BGM自体を小さくしてある）
+  try { if (musicAudio.volume !== 0.75) musicAudio.volume = 0.75; } catch(e) {}
 }
 function handleMusic() {
   musicOn = !musicOn;
@@ -1248,7 +1248,7 @@ function speakText(text) {
   text = toSpeechText(text);
   if (!window.speechSynthesis || !announceOn) return;
   try {
-    speechSynthesis.cancel();
+    if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
     const token = ++speechSeq;
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ja-JP';
