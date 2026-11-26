@@ -8,7 +8,7 @@
 
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
-- 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**v15 の内容**）
+- 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**テスト版36の内容**。2026-11-26 に利用者の「本番OK」で反映）
 - テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=36 ＝ `ride-preview.html`（v36）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
@@ -43,18 +43,19 @@
 
 ## テスト
 - `node --test tests/*.test.cjs`（20件。**index.html を読む**）
-- テストページを試すとき:
+- テストページを試すとき（tests は本番＝テスト版の内容に合わせてあるので、そのまま使える）:
 ```
 rm -rf /tmp/pv && mkdir -p /tmp/pv/tests && cp -r assets /tmp/pv/ && cp ride-preview.html /tmp/pv/index.html
 cp tests/train-timer.test.cjs /tmp/pv/tests/
-sed -i "s/assert.equal(routes\[5\].n, 24);/assert.equal(routes[5].n, 10);/; s/assert.equal(routes\[4\].n, 23);/assert.equal(routes[4].n, 26);/; s/\['東京','新青森'\]/['東京','新函館北斗']/; s/bgmer-train-timer-v2/bgmer-train-timer-v3/g; s/assert.equal(mediaElements\[0\].volume, 0.10);/assert.equal(mediaElements[0].volume, 0.75);/; s/assert.ok(el('overlay').classList.contains('show'));/assert.equal(el('arriveChip').hidden, false); assert.equal(el('overlay').classList.contains('show'), false);/; s/assert.ok(el('overlayTitle').textContent.includes('一周'));/assert.ok(el('arriveTitle').textContent.includes('一周'));/" /tmp/pv/tests/train-timer.test.cjs
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
+  テスト版で路線・BGM・終点の動きなどを変えたら、ここで落ちたテストを本番反映時に直す
 
-## テスト版にあって本番にない変更（v16〜v36）
+## 2026-11-26 に本番へ反映した変更（v16〜v36）
+今はテスト版と本番の差は、テスト版の表示（preview-label）と title だけ。
 - 発車音はドアの「プシュー」だけ／iPhoneの音声設定（audioSession）
 - ボタンを小型化、北陸新幹線→かがやき、はやぶさ終点を新函館北斗
-- 電車の窓が消える不具合の修正（**本番には残っている**）
+- 電車の窓が消える不具合の修正
 - BGM を小さくした v3（`assets/music/bgmer-train-timer-v3.*`）。アナウンス中の音量切り替えは廃止（BGMは常に同じ音量）
 - 描画を軽くした（景色は画像化、車輪の回転は停止）／画面ロック防止の取り直しと状態表示（v30から画面上部に浮かせて表示し、数秒で消える。表示が出ても画面がずれない）
 - 「半分すぎたよ」「もうすぐ到着」の注意は廃止（v36。利用者の希望：音楽と夕暮れの景色で伝わるため）。画面ロック防止の表示は再試行ボタンがあっても8秒で消える（画面に触れるたびに自動で取り直すため）（v32）
@@ -68,10 +69,10 @@ cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 - はやぶさ／こまちは実際の停車駅ではなく全駅表示。所要時間は概算
 
 ## 本番反映の手順（承認後のみ）
-1. `ride-preview.html` を `index.html` にコピー（テスト版の表示を消し、title を `あそびタイマー🚃` に）
-2. `voice-balance-preview.html` を同期（index.html との差は title の「｜音量調整テスト版」と、🎶 の audio-hint の前の `<div class="audio-hint">【音量調整テスト版】アナウンス中のBGMを10%に変更（通常時75%）</div>` の1行のみ、というテストがある。音量切り替え廃止に合わせて文言とテストを見直す）
-3. tests（路線の駅数・行き先・BGMファイル名・音量・終点の到着表示＝overlay ではなく arriveChip）、`scripts/build-bgmer-bgm.cjs`、docs を更新
-4. 全テスト、push、公開ページ確認
+1. `ride-preview.html` を `index.html` にコピー（テスト版の表示 `preview-label` の行を消し、title を `あそびタイマー🚃` に）
+2. `voice-balance-preview.html` を同期（index.html との差は title の「｜音量調整テスト版」と、`アナウンス音声：VOICEVOX:四国めたん` の前の `<div class="audio-hint">【音量調整テスト版】BGMはアナウンス中も下げずに常に75%</div>` の1行だけ。tests/voice-balance-preview.test.cjs が確認する）
+3. テスト版で変えた内容に合わせて tests・scripts・docs を直す
+4. 全テスト（`node --test tests/*.test.cjs`）、push、Actions と公開ページを確認
 
 ## BGM
 BGMer の曲。規約でボットや自動・一括ダウンロードは禁止。曲を差し替えるときは利用者が公式から手動で取得して添付する。

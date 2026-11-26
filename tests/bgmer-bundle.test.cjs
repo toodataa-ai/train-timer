@@ -6,7 +6,7 @@ const {makeManifest,tracks}=require('../scripts/build-bgmer-bgm.cjs');
 test('bundled track order, licensing sources, and boundaries are deterministic',()=>{
   const manifest=makeManifest([101,92.5,89]);
   assert.equal(manifest.version,1);
-  assert.equal(manifest.file,'bgmer-train-timer-v2.m4a');
+  assert.equal(manifest.file,'bgmer-train-timer-v3.m4a');
   assert.equal(manifest.source_method,'official-site-manual-download');
   assert.equal(manifest.tracks.length,3);
   assert.deepEqual(manifest.tracks.map(t=>t.title),[

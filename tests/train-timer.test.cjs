@@ -120,10 +120,10 @@ test('seven routes include a full Tokyo-to-Tokyo Yamanote outer loop', () => {
   const routes = run('ROUTES.map(r => ({from:r.from,to:r.to,n:r.stations.length}))');
   assert.deepEqual(Array.from(routes, r => [r.from,r.to]), [
     ['三鷹','千葉'], ['博多','東京'], ['高尾','東京'],
-    ['松本','新宿'], ['東京','新青森'], ['東京','敦賀'], ['東京','東京'], ['東京','秋田'], ['藤沢','鎌倉']
+    ['松本','新宿'], ['東京','新函館北斗'], ['東京','敦賀'], ['東京','東京'], ['東京','秋田'], ['藤沢','鎌倉']
   ]);
-  assert.equal(routes[4].n, 23);
-  assert.equal(routes[5].n, 24);
+  assert.equal(routes[4].n, 26);
+  assert.equal(routes[5].n, 10);
   assert.equal(routes[6].n, 31, '30 distinct Yamanote stations plus Tokyo again');
   assert.equal(buttons.length, 9);
   assert.equal(routes[7].n, 23);
@@ -158,7 +158,8 @@ test('station progress only reaches the terminus when the timer expires', () => 
   run('tick()');
   assert.equal(el('currentStation').textContent,'📍 敦賀');
   assert.equal(run('running'), false);
-  assert.ok(el('overlay').classList.contains('show'));
+  assert.equal(el('arriveChip').hidden, false); // 別画面は出さず、終点に停車
+  assert.equal(el('overlay').classList.contains('show'), false);
 });
 
 test('pause, resume, sound toggles, and reset preserve user preferences', () => {
@@ -243,8 +244,8 @@ test('BGM starts, stops and resumes alongside timer, even after a silent-mode op
   run('handleMusic()'); // turn BGM on while timer runs
   assert.equal(mediaElements.length,1);
   assert.equal(mediaElements[0].playCount,1);
-  run('duckMusic(true)');
-  assert.equal(mediaElements[0].volume, 0.10);
+  run('duckMusic(true)'); // アナウンス中もBGMは下げない
+  assert.equal(mediaElements[0].volume, 0.75);
   run('duckMusic(false)');
   assert.equal(mediaElements[0].volume, 0.75);
   run('handleStart()'); // pause
@@ -483,13 +484,13 @@ test('Yamanote loop reaches Tokyo only at timer end and retains correct station 
   advance(60000); run('tick()');
   assert.equal(el('currentStation').textContent,'📍 東京');
   assert.equal(run('running'),false);
-  assert.ok(el('overlayTitle').textContent.includes('一周'));
+  assert.ok(el('arriveTitle').textContent.includes('一周'));
 });
 
 test('BGMer bundle activates only after valid manifest and media file are confirmed', async () => {
   const hits=[];
   const data = {
-    version:1,file:'bgmer-train-timer-v2.m4a',
+    version:1,file:'bgmer-train-timer-v3.m4a',
     tracks:[
       {title:'並走ハピネス',start:0,end:100},
       {title:'遊覧飛行',start:100,end:192},
@@ -509,7 +510,7 @@ test('BGMer bundle activates only after valid manifest and media file are confir
   run('handleStart()');
   assert.equal(mediaElements.length,1);
   const a=mediaElements[0];
-  assert.equal(a.src,'assets/music/bgmer-train-timer-v2.m4a');
+  assert.equal(a.src,'assets/music/bgmer-train-timer-v3.m4a');
   assert.equal(a.playCount,1);
   assert.equal(a.playbackRate,1, 'use each original song at natural tempo');
   assert.equal(audioBlobs.length,0, 'no synthetic WAV needed');
@@ -517,7 +518,7 @@ test('BGMer bundle activates only after valid manifest and media file are confir
   advance(150000);run('tick()');
   assert.equal(a.currentTime,100,'halfway seeks into the groove song');
   assert.equal(a.playCount,1);
-  assert.equal(a.src,'assets/music/bgmer-train-timer-v2.m4a');
+  assert.equal(a.src,'assets/music/bgmer-train-timer-v3.m4a');
   assert.ok(el('musicPace').textContent.includes('遊覧飛行'));
   assert.ok(el('musicStatus').textContent.includes('遊覧飛行'));
   a.currentTime=191.8;
@@ -539,7 +540,7 @@ test('BGMer bundle activates only after valid manifest and media file are confir
 test('invalid BGMer manifest or missing media keeps existing audio functional', async () => {
   const cases=[
     {payload:{version:1,file:'https://otherhost/music.m4a',tracks:[]},exists:true},
-    {payload:{version:1,file:'bgmer-train-timer-v2.m4a',tracks:[
+    {payload:{version:1,file:'bgmer-train-timer-v3.m4a',tracks:[
       {title:'並走ハピネス',start:0,end:100},
       {title:'遊覧飛行',start:100,end:180},
       {title:'グルーヴコースター',start:180,end:270}
@@ -571,7 +572,7 @@ test('BGMer assets arriving after timer start are activated only after stop', as
   run('handleStart()');
   assert.ok(mediaElements[0].src.startsWith('blob:'));
   respond({ok:true,json:async()=>({
-    version:1,file:'bgmer-train-timer-v2.m4a',tracks:[
+    version:1,file:'bgmer-train-timer-v3.m4a',tracks:[
       {title:'並走ハピネス',start:0,end:90},
       {title:'遊覧飛行',start:90,end:180},
       {title:'グルーヴコースター',start:180,end:270}
@@ -582,6 +583,6 @@ test('BGMer assets arriving after timer start are activated only after stop', as
   run('handleStart()'); // pause unlocks new audio for next play
   run('handleStart()'); // resume
   assert.equal(mediaElements.length,2);
-  assert.equal(mediaElements[1].src,'assets/music/bgmer-train-timer-v2.m4a');
+  assert.equal(mediaElements[1].src,'assets/music/bgmer-train-timer-v3.m4a');
   run('handleReset()');
 });

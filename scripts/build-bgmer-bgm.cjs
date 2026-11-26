@@ -9,8 +9,9 @@ const {spawnSync} = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const directory = path.join(root, 'assets', 'music');
 const sources = path.join(directory, 'source');
-const outputFile = path.join(directory, 'bgmer-train-timer-v2.m4a');
-const manifestFile = path.join(directory, 'bgmer-train-timer-v2.json');
+// v3: アナウンスが聞き取りやすいよう、v2 より全体を約6dB小さくした版（アナウンス中も音量は切り替えない）
+const outputFile = path.join(directory, 'bgmer-train-timer-v3.m4a');
+const manifestFile = path.join(directory, 'bgmer-train-timer-v3.json');
 const tracks = [
   {file:'01-happiness.mp3',title:'並走ハピネス',url:'https://bgmer.net/music/277/'},
   {file:'02-yuran-hikou.mp3',title:'遊覧飛行',url:'https://bgmer.net/music/439/'},
@@ -61,7 +62,7 @@ function main() {
     'asetpts=PTS-STARTPTS,acompressor=threshold=-17dB:ratio=2:attack=10:release=150,'+
     'afade=t=in:st=0:d=0.10,afade=t=out:st='+
     Math.max(0,dur-0.20).toFixed(3)+':d=0.18[a'+i+']');
-  filters.push(tracks.map((_,i)=>'[a'+i+']').join('')+'concat=n=3:v=0:a=1[all]');
+  filters.push(tracks.map((_,i)=>'[a'+i+']').join('')+'concat=n=3:v=0:a=1,volume=-6dB[all]');
   try {
     command('ffmpeg',['-hide_banner','-loglevel','error','-y',
       ...inputs.flatMap(input=>['-i',input]),

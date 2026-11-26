@@ -21,7 +21,7 @@
    - `assets/music/source/02-yuran-hikou.mp3`
    - `assets/music/source/03-groove-coaster.mp3`
 3. PC/Macに `ffmpeg` と `ffprobe` がある状態で `node scripts/build-bgmer-bgm.cjs` を実行します。
-4. 生成された `assets/music/bgmer-train-timer-v2.m4a` と `assets/music/bgmer-train-timer-v2.json` を同時に本番へ反映します。
+4. 生成された `assets/music/bgmer-train-timer-v3.m4a` と `assets/music/bgmer-train-timer-v3.json` を同時に本番へ反映します（v3 は v2 より約6dB小さく、アナウンス中も音量を切り替えません）。
 5. スマートフォンで各時間帯のBGMとアナウンスの音量・切り替えを実機確認してください。
 
 ## 技術方針
