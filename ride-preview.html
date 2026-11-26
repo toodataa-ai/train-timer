@@ -409,13 +409,18 @@ body .btn-audio-test { min-height: 34px; padding: 5px 10px; font-size: 12px; }
 .wheel { animation: none; }
 .speedlines { right: -130px; -webkit-mask-position: 0 0; mask-position: 0 0; animation-name: rush; will-change: transform; }
 @keyframes rush { to { transform: translateX(-130px); } }
-body > .wake-panel { order: 3; padding: 3px 10px; margin-bottom: 6px; font-size: 11px; }
+/* 画面ロック防止の表示は画面の上に浮かせる（表示が出ても画面全体がずれないように） */
+body > .wake-panel { position: fixed; top: calc(6px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  z-index: 60; width: max-content; max-width: min(92vw, 520px); margin: 0; padding: 4px 12px; font-size: 11px;
+  border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.35); opacity: 1; transition: opacity .6s; pointer-events: none; }
+body > .wake-panel #wakeRetry { pointer-events: auto; padding: 4px 8px; }
+body > .wake-panel.fade { opacity: 0; }
 body > .wake-panel[hidden] { display: none; }
 </style>
 </head>
 <body>
 
-<div class="preview-label">【テスト版29】全路線を録音アナウンスに（駅名を標準アクセントに・音声が出ない不具合を修正）</div>
+<div class="preview-label">【テスト版30】全路線を録音アナウンスに（国立を平らに・画面ロック防止の表示で画面がずれないように）</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -741,9 +746,13 @@ function setWakeStatus(state, explanation = '') {
     background: 'アプリが表示されていないため、画面ロック防止を一時解除しています。'
   };
   el.textContent = (messages[state] || '') + (explanation ? ' (' + explanation + ')' : '');
+  // 時計にかぶらないよう、表示は数秒で消す（「有効」は3秒、注意は8秒。再試行ボタンがあるときは残す）
+  clearTimeout(setWakeStatus.fadeTimer);
+  panel.classList.remove('fade');
   retry.hidden = !(screenWakeDesired && (state === 'failed' || state === 'released') &&
     typeof navigator !== 'undefined' && navigator.wakeLock &&
     typeof navigator.wakeLock.request === 'function');
+  if (retry.hidden) setWakeStatus.fadeTimer = setTimeout(() => panel.classList.add('fade'), state === 'active' || state === 'idle' ? 3000 : 8000);
 }
 
 function retryScreenWakeLock() {
