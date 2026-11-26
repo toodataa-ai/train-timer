@@ -396,7 +396,7 @@ body.enoden { --accent: #4fb878; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版18】発車はプシューだけ</div>
+<div class="preview-label">【テスト版19】音楽が鳴らない対策</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -1109,7 +1109,12 @@ function updateMusicPhase() {
     setMusicStatus('🎵 BGMer『' + BGMER_TRACK_TITLES[phase] + '』再生中');
   }
 }
+// iPhone: 消音モードでも音楽と発車の音が鳴るように、再生用の音として扱ってもらう（対応端末のみ）
+function usePlaybackAudio() {
+  try { if (typeof navigator !== 'undefined' && navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}
+}
 function startMusic() {
+  usePlaybackAudio();
   if (!musicOn || (!running && !musicPreviewing)) return;
   const a = getMusicAudio();
   if (!a) return;
