@@ -128,10 +128,6 @@ input[type=range]::-webkit-slider-thumb {
 .progress-bar { height: 100%; border-radius: 7px; width: 0%; background: var(--accent); }
 .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
 
-.alert { width: 100%; max-width: 560px; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; text-align: center; margin-bottom: 10px; display: none; }
-.alert.show { display: block; animation: pulse 1.2s infinite alternate; }
-.alert-orange { background: rgba(255,140,34,0.12); border: 1.5px solid var(--orange); color: var(--orange); }
-.alert-red    { background: rgba(255,51,85,0.12);  border: 1.5px solid var(--red);    color: var(--red); }
 @keyframes pulse { from { opacity: 0.75; } to { opacity: 1; } }
 
 .track-outer { width: 100%; max-width: 560px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
@@ -249,7 +245,6 @@ body { padding-top: 6px; }
 body > * { order: 7; flex-shrink: 0; }
 body > .preview-label { order: 0; margin-bottom: 4px; }
 body > .time-panel { order: 1; padding: 6px 14px; gap: 3px; margin-bottom: 6px; }
-body > .alert { order: 2; padding: 5px 8px; font-size: 12px; margin-bottom: 6px; }
 body > .ride { order: 3; margin-bottom: 8px; }
 body > .controls { order: 4; }
 body > .header { order: 5; }
@@ -297,7 +292,7 @@ rt { font-size: 9px; font-weight: 700; line-height: 1.1; }
 .map-st span { writing-mode: horizontal-tb; display: flex; flex-direction: row; align-items: flex-start; justify-content: center; gap: 1px; max-height: none; margin-left: 8px; }
 .map-st span b, .map-st span small { writing-mode: vertical-rl; line-height: 1; white-space: nowrap; }
 .map-st span small { font-weight: 700; opacity: .75; }
-.alert rt, .route-btn rt { font-size: 8px; }
+.route-btn rt { font-size: 8px; }
 /* 主要駅つき進行バー */
 .progress-wrap > .progress-label { display: none; }
 .progress-wrap > .progress-label.counts { display: flex; margin-top: 1px; }
@@ -385,11 +380,6 @@ body.enoden { --accent: #4fb878; }
   padding: 4px 12px; text-align: center; box-shadow: 0 3px 12px rgba(0,0,0,.25); }
 .arrive-chip b { display: block; font-size: 14px; }
 .arrive-chip[hidden] { display: none; }
-/* 「半分すぎたよ」などの注意も景色の下に浮かせる（出ても画面全体がずれないように） */
-.scene .alert { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); z-index: 7; width: max-content; max-width: 94%;
-  margin: 0; padding: 4px 12px; font-size: 12px; border-radius: 10px; box-shadow: 0 3px 12px rgba(0,0,0,.3); }
-.scene .alert-orange { background: rgba(40,26,12,.92); }
-.scene .alert-red { background: rgba(48,12,20,.92); }
 @media (max-height: 600px) { .scene { height: 188px; } }
 .speedlines { position: absolute; left: 0; right: 0; bottom: 52px; height: 50px; z-index: 2; opacity: 0; pointer-events: none; background: repeating-linear-gradient(180deg, transparent 0 11px, rgba(255,255,255,.75) 11px 12px, transparent 12px 17px); -webkit-mask-image: repeating-linear-gradient(90deg, transparent 0 30px, #000 80px, transparent 130px); mask-image: repeating-linear-gradient(90deg, transparent 0 30px, #000 80px, transparent 130px); -webkit-mask-size: 130px 100%; mask-size: 130px 100%; animation: rush .22s linear infinite; animation-play-state: paused; }
 .ride.moving .scene[data-fast="1"] .speedlines { opacity: .8; animation-play-state: running; }
@@ -431,7 +421,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版35】終点で駅に停車・「到着しました」のアナウンス・注意の表示で画面がずれないように・八王子を平らに・新幹線5両／江ノ電2両</div>
+<div class="preview-label">【テスト版36】「半分すぎたよ」「もうすぐ到着」の注意をなくした</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -525,8 +515,6 @@ body > .wake-panel[hidden] { display: none; }
     <div class="world" id="world"></div>
     <div class="hud"><div><small>まえの えき</small><b id="signFrom"></b></div><div><small id="signToLabel">つぎは</small><b id="signTo"></b></div></div>
     <div class="arrive-chip" id="arriveChip" hidden><b id="arriveTitle"></b></div>
-    <div class="alert alert-orange" id="alertOrange">⚠️ 半分すぎたよ！そろそろかたづけの準備して！</div>
-    <div class="alert alert-red"    id="alertRed">🚨 もうすぐ到着！あそびはもうおわりだよ！！</div>
     <div class="speedlines"></div>
     <div class="couple-chip" id="coupleChip" hidden></div>
     <div class="train-track"><div class="train" id="partnerTrain" hidden><svg id="partnerSvg" viewBox="0 -9 450 72"></svg></div><div class="train" id="rideTrain">
@@ -2167,8 +2155,6 @@ function renderDisplay() {
 
   renderRide(1 - pct);
 
-  document.getElementById('alertOrange').classList.toggle('show', pct <= 0.5 && pct > 0.2);
-  document.getElementById('alertRed').classList.toggle('show', pct <= 0.2 && remainMs > 0);
 }
 
 function pad(n) { return String(n).padStart(2,'0'); }
@@ -2215,8 +2201,6 @@ function handleReset() {
   document.getElementById('timeSlider').value = 0;
   applySlider(0);
   document.getElementById('startBtn').textContent = ROUTES[routeIdx].icon + ' しゅっぱつ！';
-  document.getElementById('alertOrange').classList.remove('show');
-  document.getElementById('alertRed').classList.remove('show');
   document.getElementById('stationsScroll').scrollTop = 0;
   resetListDOM();
   refreshStationTimes();
@@ -2230,8 +2214,6 @@ function resetState() {
   clearAnnouncements();
   running = false; timerInterval = null; startTime = null;
   remainMs = 0; lastStIdx = -1; thresholds = []; isFresh = true;
-  document.getElementById('alertOrange').classList.remove('show');
-  document.getElementById('alertRed').classList.remove('show');
   document.getElementById('stationsScroll').scrollTop = 0;
 }
 
@@ -2278,7 +2260,7 @@ function showToast(msg) {
 // ============================================================
 selectRoute(0);
 initSeek();
-document.querySelectorAll('.alert, .audio-hint').forEach(addFurigana);
+document.querySelectorAll('.audio-hint').forEach(addFurigana);
 loadBGMerBundle();
 </script>
 </body>
