@@ -9,7 +9,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**v15 の内容**）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=32 ＝ `ride-preview.html`（v32）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=33 ＝ `ride-preview.html`（v33）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -19,7 +19,7 @@
 - 音声を作り直すときは古いファイルを消すので、上の仕組みを外さないこと
 - 読み・アクセントの直し（`scripts/fix-voice-reading.py`。build-voice.py の後に毎回実行する）
   - 誤読: ハチノヘ・ニノヘ・シチノヘトワダ（「ヘ」が「エ」になっていた）
-  - 利用者の希望のイントネーション（3案を聞き比べてもらい選ばれた）: 三鷹・吉祥寺は平ら（平板、v26）、高円寺は最初が高い「コ↓ーエンジ」（頭高、v27）、国立は平ら（v30）
+  - 利用者の希望のイントネーション（3案を聞き比べてもらい選ばれた）: 三鷹・吉祥寺は平ら（平板、v26）、高円寺は最初が高い「コ↓ーエンジ」（頭高、v27）、国立は平ら（v30）、八王子は平ら（v33。西八王子はそのまま）
   - 駅名のアクセントは辞書の標準アクセント（v28）: 文中の駅名を漢字にして VOICEVOX に渡したときのアクセントを使い、読みはカタカナのまま。漢字だと読みが変わる駅（国立・北上・長谷・西千葉・水沢江刺の文中など）は従来のまま
   - 「今回の旅は、N分でした」は「N分」を一つのまとまりで読む（fix-voice-reading.py の fix_minutes、v31）
   - 新しい希望は聞き比べ用の音声（今の読み・平ら・頭高など）を作って送り、選んでもらう
@@ -51,7 +51,7 @@ sed -i "s/assert.equal(routes\[5\].n, 24);/assert.equal(routes[5].n, 10);/; s/as
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
 
-## テスト版にあって本番にない変更（v16〜v32）
+## テスト版にあって本番にない変更（v16〜v33）
 - 発車音はドアの「プシュー」だけ／iPhoneの音声設定（audioSession）
 - ボタンを小型化、北陸新幹線→かがやき、はやぶさ終点を新函館北斗
 - 電車の窓が消える不具合の修正（**本番には残っている**）
