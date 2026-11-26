@@ -396,7 +396,7 @@ body.enoden { --accent: #4fb878; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版17】発車はドアの音だけ</div>
+<div class="preview-label">【テスト版18】発車はプシューだけ</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -829,7 +829,7 @@ function resumeActx() {
   if (c && c.state !== 'running') c.resume();
 }
 
-// 発車の音は、ドアが閉まる「プシュー、ドン」だけ。録音は使わず、その場で合成する
+// 発車の音は、ドアが閉まる「プシュー」だけ。録音は使わず、その場で合成する
 function scheduleDeparture(c, out, t0) {
   // 音を大きくしつつ、割れないように頭打ちをやわらかくする
   const limiter = c.createWaveShaper();
@@ -858,12 +858,6 @@ function scheduleDeparture(c, out, t0) {
   };
   // プシュー
   noise(t0, 0.75, filter('highpass', 1800, env(0.7, t0, 0.75, 0.04, 0.5)));
-  // ドン
-  const t = t0 + 0.65;
-  const o = c.createOscillator();
-  o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.28);
-  o.connect(env(0.9, t, 0.28, 0.005, 0.23)); o.start(t); o.stop(t + 0.33);
-  noise(t, 0.1, filter('lowpass', 900, env(0.8, t, 0.1, 0.003, 0.07)));
 }
 
 let departureOut = null;
