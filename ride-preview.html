@@ -423,7 +423,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版37】京王井の頭線とロマンスカーを追加</div>
+<div class="preview-label">【テスト版38】京王井の頭線とロマンスカーを追加・駅が景色と同じ速さで近づくように</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -1690,11 +1690,16 @@ function moveWorld(pos, seg) {
   const world = document.getElementById('world');
   const width = widthOf('scene');
   const cum = timeline();
-  if (width !== worldSpacing) {
-    stopWorld(); worldSpacing = width; worldX = [0]; worldSeg = -1;
-    const {w, mean} = timelineCache;
-    // 駅の間の長さ = 時間 × 速さ（近すぎる駅は画面1枚分ほど離す）
-    for (let i = 0; i < N-1; i++) worldX.push(worldX[i] + width*0.9*Math.max(1, (w[i]/mean) * (segSpeed(i)/90)));
+  const key = width + ':' + totalMs;
+  if (key !== worldSpacing) {
+    stopWorld(); worldSpacing = key; worldX = [0]; worldSeg = -1;
+    // 駅の間の長さ = その区間にかかる秒数 × 景色と同じ速さ（選んだ時間が長いほど駅の間も長くなる）
+    // 景色と同じ割合（速さ^1.25）で速くし、近すぎる駅は画面1枚分ほど離す
+    for (let i = 0; i < N-1; i++) {
+      const secs = totalMs * (cum[i+1] - cum[i]) / 1000;
+      const pxPerSec = width * 0.086 * Math.pow(segSpeed(i)/90, 1.25);
+      worldX.push(worldX[i] + Math.max(width*0.9, secs * pxPerSec));
+    }
     for (let i = 0; i < N; i++) {
       const el = document.getElementById('world'+i);
       if (el) el.style.marginLeft = worldX[i] + 'px';
