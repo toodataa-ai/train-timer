@@ -631,14 +631,23 @@ const ROUTES = [
     sub:'あずさが新宿についたら あそびおわり', icon:'🚆', from:'松本', to:'新宿',
     endIcon:'🏙️', endTitle:'🚆 新宿に到着！', whistle:'shinkansen',
     stations:[
-      {name:'松本',    ruby:'まつもと',      num:'AZ01',ms:'key'},{name:'塩尻',    ruby:'しおじり',      num:'AZ02',ms:null},
-      {name:'岡谷',    ruby:'おかや',        num:'AZ03',ms:null},{name:'上諏訪',  ruby:'かみすわ',      num:'AZ04',ms:'key'},
-      {name:'茅野',    ruby:'ちの',          num:'AZ05',ms:null},{name:'小淵沢',  ruby:'こぶちざわ',    num:'AZ06',ms:null},
-      {name:'韮崎',    ruby:'にらさき',      num:'AZ07',ms:null},{name:'甲府',    ruby:'こうふ',        num:'AZ08',ms:'key'},
-      {name:'山梨市',  ruby:'やまなしし',    num:'AZ09',ms:null},{name:'塩山',    ruby:'えんざん',      num:'AZ10',ms:null},
-      {name:'大月',    ruby:'おおつき',      num:'AZ11',ms:'key'},{name:'八王子',  ruby:'はちおうじ',    num:'AZ12',ms:'key'},
-      {name:'立川',    ruby:'たちかわ',      num:'AZ13',ms:'key'},{name:'三鷹',    ruby:'みたか',        num:'AZ14',ms:null},
-      {name:'新宿',    ruby:'しんじゅく',    num:'AZ15',ms:'key'},
+      {name:'松本', ruby:'まつもと', num:'AZ01', ms:'key'},
+      {name:'塩尻', ruby:'しおじり', num:'AZ02', ms:null},
+      {name:'岡谷', ruby:'おかや', num:'AZ03', ms:null},
+      {name:'下諏訪', ruby:'しもすわ', num:'AZ04', ms:null},
+      {name:'上諏訪', ruby:'かみすわ', num:'AZ05', ms:'key'},
+      {name:'茅野', ruby:'ちの', num:'AZ06', ms:null},
+      {name:'富士見', ruby:'ふじみ', num:'AZ07', ms:null},
+      {name:'小淵沢', ruby:'こぶちざわ', num:'AZ08', ms:null},
+      {name:'韮崎', ruby:'にらさき', num:'AZ09', ms:null},
+      {name:'甲府', ruby:'こうふ', num:'AZ10', ms:'key'},
+      {name:'石和温泉', ruby:'いさわおんせん', num:'AZ11', ms:null},
+      {name:'山梨市', ruby:'やまなしし', num:'AZ12', ms:null},
+      {name:'塩山', ruby:'えんざん', num:'AZ13', ms:null},
+      {name:'大月', ruby:'おおつき', num:'AZ14', ms:'key'},
+      {name:'八王子', ruby:'はちおうじ', num:'AZ15', ms:'key'},
+      {name:'立川', ruby:'たちかわ', num:'AZ16', ms:'key'},
+      {name:'新宿', ruby:'しんじゅく', num:'AZ17', ms:'key'},
     ]
   },
   {
@@ -1646,7 +1655,7 @@ const SEG_MINUTES = [
   [2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,3,3,3,2,2,2,3,2,2,3,2,2,2,3,2],
   [16,47,35,20,16,13,14,35,79,11,7],
   [3,3,4,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,5,5,4,2],
-  [9,10,8,6,17,15,12,9,5,20,30,9,12,13],
+  [9,10,4,4,6,10,7,15,12,5,5,5,20,30,9,25], // あずさ: 全駅に停まる号（あずさ3号など）に合わせた
   [5,19,13,9,12,8,10,12,10,12,11,6,8,8,7,6,11,11,11,13,11,13,15,32,13],
   [5,19,56,47,20,12,17,10,12],
   [2,2,2,2,2,2,2,2,2,2,3,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
@@ -1971,7 +1980,7 @@ const ROUTE_LAND = [
   // 中央線: 高尾→東京
   spread(['mountain',1],['town',3],['river',1],['town',13],['city',2],['park',1],['tokyo',2]),
   // あずさ: 松本→新宿
-  ['alps','mountain','lake','lake','alps','alps','fuji','orchard','orchard','mountain','mountain','river','town','city'],
+  ['alps','mountain','lake','lake','lake','alps','alps','alps','fuji','orchard','orchard','orchard','mountain','mountain','river','town'],
   // 東北新幹線: 東京→新函館北斗
   ['tokyo','city','rural','rural','rural','mountain','rural','mountain','mountain','rural','rural','rural','rural','rural','rural','rural','alps','mountain','mountain','mountain','rural','alps','mountain','tunnel','rural'],
   // 北陸新幹線: 東京→敦賀
