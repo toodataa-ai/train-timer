@@ -59,7 +59,7 @@ function makeApp({wakeLockRequest,fetchResponder} = {}) {
     if (!elements.has(id)) elements.set(id, new FakeElement());
     return elements.get(id);
   };
-  const buttons = Array.from({length: 9}, () => new FakeElement());
+  const buttons = Array.from({length: 11}, () => new FakeElement());
   const mediaElements = [], audioBlobs = [];
   let clock = 1_700_000_000_000;
   let nextTimerId = 1;
@@ -115,19 +115,22 @@ function makeApp({wakeLockRequest,fetchResponder} = {}) {
   return {run, el, advance: ms => { clock += ms; }, buttons, mediaElements, audioBlobs};
 }
 
-test('seven routes include a full Tokyo-to-Tokyo Yamanote outer loop', () => {
+test('eleven routes include a full Tokyo-to-Tokyo Yamanote outer loop, Inokashira and Romancecar', () => {
   const {run,el,buttons} = makeApp();
   const routes = run('ROUTES.map(r => ({from:r.from,to:r.to,n:r.stations.length}))');
   assert.deepEqual(Array.from(routes, r => [r.from,r.to]), [
     ['三鷹','千葉'], ['博多','東京'], ['高尾','東京'],
-    ['松本','新宿'], ['東京','新函館北斗'], ['東京','敦賀'], ['東京','東京'], ['東京','秋田'], ['藤沢','鎌倉']
+    ['松本','新宿'], ['東京','新函館北斗'], ['東京','敦賀'], ['東京','東京'], ['東京','秋田'], ['藤沢','鎌倉'],
+    ['渋谷','吉祥寺'], ['新宿','箱根湯本']
   ]);
   assert.equal(routes[4].n, 26);
   assert.equal(routes[5].n, 10);
   assert.equal(routes[6].n, 31, '30 distinct Yamanote stations plus Tokyo again');
-  assert.equal(buttons.length, 9);
+  assert.equal(buttons.length, 11);
   assert.equal(routes[7].n, 23);
   assert.equal(routes[8].n, 15);
+  assert.equal(routes[9].n, 17, 'Inokashira local stops at all 17 stations');
+  assert.equal(routes[10].n, 5);
   for (let i = 0; i < routes.length; i++) {
     run('selectRoute('+i+')');
     assert.equal(el('labelFrom').textContent, routes[i].from);
@@ -135,6 +138,8 @@ test('seven routes include a full Tokyo-to-Tokyo Yamanote outer loop', () => {
     assert.equal(el('stationsScroll').children.length, routes[i].n);
     assert.ok(buttons[i].classList.contains('active'));
   }
+  assert.equal(el('routeNote').hidden, true, 'Romancecar uses its real stops, so no all-stations note');
+  run('selectRoute(8)');
   assert.equal(el('routeNote').hidden, false);
   assert.deepEqual(Array.from(run('ROUTES[6].stations.map(s => s.name)')), [
     '東京','有楽町','新橋','浜松町','田町','高輪ゲートウェイ','品川','大崎',

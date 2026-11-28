@@ -9,7 +9,7 @@
 
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
-- 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**テスト版36の内容**。2026-11-26 に利用者の「本番OK」で反映）
+- 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**テスト版40の内容**。2026-11-28 に利用者の「本番OK」で反映）
 - テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=40 ＝ `ride-preview.html`（v40）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
@@ -52,13 +52,14 @@ cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
   テスト版で路線・BGM・終点の動きなどを変えたら、ここで落ちたテストを本番反映時に直す
 
-## テスト版にあって本番にない変更（v37〜）
+## 2026-11-28 に本番へ反映した変更（v37〜v40）
+今はテスト版と本番の差は、テスト版の表示（preview-label）と title だけ。
 - v37: 京王井の頭線（各駅停車 渋谷→吉祥寺 全17駅、IN01〜IN17、路線9）と小田急ロマンスカー「はこね」（新宿→町田→本厚木→小田原→箱根湯本、路線10）を追加。どちらも上り・下りを選べる
   - ロマンスカーの停車駅は列車ごとに違うので、代表的な駅にした。駅間の分数（SEG_MINUTES）はどちらも概算
   - 路線ごとの配列（TRAIN_STYLES・SEG_MINUTES・ROUTE_SPEED・DIR_NAMES・DIR_ORDER・ROUTE_LAND・BAR_STATIONS）とボタン・色・body のクラスに追加。録音は全路線（`hasVoice`）
   - 井の頭線の景色に park は使わない（park の景色には東京タワーが出るため）
   - 井の頭線の明大前・駒場東大前・池ノ上・西永福・永福町は、カタカナだと読みが途中で切れるので ACCENT でまとめた
-  - 本番反映のときは tests/train-timer.test.cjs の路線一覧（11路線・ボタン11個・井の頭線17駅・ロマンスカー5駅）を直す（今はテスト版で1件落ちる）
+  - tests/train-timer.test.cjs は11路線・ボタン11個・井の頭線17駅・ロマンスカー5駅に合わせて直した
 - v38: 駅が景色より遅く近づいていた問題を修正。駅の間の長さを「区間の秒数 × 景色と同じ割合の速さ（width×0.086×(速さ/90)^1.25 px/秒）」にし、選んだ時間の長さに関係なく同じ速さで駅が流れるようにした（前は駅の間が画面1枚分ほどに固定で、時間を長くしたり駅が少ない路線だと極端に遅かった）。`moveWorld`
 - v39: 終点の1つ前の駅を出るときだけ「〇〇を発車しました。次は終点、△△です。」（`departText`）。19文を録音し、使わなくなった文の音声は消した。あわせて江ノ電の和田塚を「ワダ↓ズカ」とひと続きで読むようにした
   - 注意: 音声ファイルと manifest は本番とテスト版で共通。v39 で一度、本番が使う文の音声まで消してしまい（本番の終点1つ前のアナウンスが端末の声になった）、すぐ戻した。今は collect-voice-texts.py が index.html と ride-preview.html の両方から文を集めるので、片方だけの文も残る

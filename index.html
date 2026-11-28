@@ -349,7 +349,9 @@ body > .dir-row { order: 5; width: 100%; max-width: 560px; display: grid; grid-t
 /* 路線ボタンの並びと追加路線の色 */
 body.komachi { --accent: #ff5a6e; }
 body.enoden { --accent: #4fb878; }
-#rb0{order:1}#rb1{order:2}#rb2{order:3}#rb3{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb6{order:8;grid-column:auto}#rb8{order:9}
+body.inokashira { --accent: #3ab0d2; }
+body.romancecar { --accent: #ef5a47; }
+#rb0{order:1}#rb1{order:2}#rb2{order:3}#rb3{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb6{order:8}#rb8{order:9}
 /* さらに引いた映像 */
 .scene { height: clamp(188px, 31svh, 206px); }
 .layer.far, .layer.mid, .layer.front { width: 225%; animation-name: scroll3; }
@@ -394,7 +396,17 @@ body.enoden { --accent: #4fb878; }
 body > .route-selector { grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 8px; }
 body .route-selector .route-btn { grid-column: auto; min-height: 40px; padding: 4px 1px; font-size: 12px; line-height: 1.3; border-radius: 8px; white-space: nowrap; }
 .route-selector .route-btn small { font-size: 9.5px; }
-#rb0{order:1}#rb2{order:2}#rb6{order:3}#rb1{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb3{order:8}#rb8{order:9}
+/* 路線ボタンは「新幹線・JR・私鉄」のまとまりで並べる（12列: 新幹線とJRは1行に4つ、私鉄は3つ） */
+body > .route-selector { grid-template-columns: repeat(12, minmax(0, 1fr)); row-gap: 4px; }
+body .route-selector .route-btn { grid-column: span 3; min-width: 0; overflow: hidden; }
+body .route-selector .route-btn small { font-size: 8.5px; letter-spacing: -.02em; }
+body .route-selector #rb9, body .route-selector #rb10, body .route-selector #rb8 { grid-column: span 4; }
+body .route-selector #rb6 { grid-column: span 3; } /* 昔の「山手線は1行まるごと」の指定を打ち消す */
+.route-group { grid-column: 1 / -1; font-size: 11px; font-weight: 800; color: #8a92ad; letter-spacing: .08em; padding: 4px 2px 0; border-bottom: 1px solid var(--border); }
+#rgShinkansen{order:0}#rb1{order:1}#rb4{order:2}#rb7{order:3}#rb5{order:4}
+#rgJR{order:10}#rb0{order:11}#rb2{order:12}#rb6{order:13}#rb3{order:14}
+#rgPrivate{order:20}#rb9{order:21}#rb10{order:22}#rb8{order:23}
+@media (max-width: 359px) { body .route-selector .route-btn, body .route-selector #rb6, body .route-selector #rb9, body .route-selector #rb10, body .route-selector #rb8 { grid-column: span 6; } }
 body > .dir-row { gap: 5px; margin: 0 0 6px; }
 .dir-row .route-btn-dir { min-height: 36px; padding: 4px 2px; font-size: 13px; line-height: 1.3; border-radius: 8px; white-space: nowrap; }
 .dir-row .route-btn-dir small { display: inline; margin-left: 6px; font-size: 10px; }
@@ -426,6 +438,9 @@ body > .wake-panel[hidden] { display: none; }
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
 </div>
 <div class="route-selector">
+  <div class="route-group" id="rgShinkansen">新幹線</div>
+  <div class="route-group" id="rgJR">JR</div>
+  <div class="route-group" id="rgPrivate">私鉄</div>
   <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
   <button class="route-btn"        id="rb2" onclick="selectRoute(2)">🟠 中央線<br><small>高尾→東京</small></button>
@@ -435,6 +450,8 @@ body > .wake-panel[hidden] { display: none; }
   <button class="route-btn"        id="rb6" onclick="selectRoute(6)">🟢 山手線<br><small>外回り・一周</small></button>
   <button class="route-btn"        id="rb7" onclick="selectRoute(7)">🚄 こまち<br><small>東京→秋田</small></button>
   <button class="route-btn"        id="rb8" onclick="selectRoute(8)">🚋 江ノ電<br><small>藤沢→鎌倉</small></button>
+  <button class="route-btn"        id="rb9" onclick="selectRoute(9)">🚃 井の頭線<br><small>渋谷→吉祥寺</small></button>
+  <button class="route-btn"        id="rb10" onclick="selectRoute(10)">🚅 ロマンスカー<br><small>新宿→箱根湯本</small></button>
 </div>
 
 <div class="header">
@@ -1260,7 +1277,8 @@ function toSpeechText(text) {
 // 端末の読み上げは終わる瞬間に画面が引っかかるため、音声ファイルを流す
 // ============================================================
 const VOICE_DIR = 'assets/voice/metan/';
-const VOICE_ROUTES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+// 全路線を録音にする（路線は後から ROUTES.push で足すので、その場で数える）
+const hasVoice = idx => idx >= 0 && idx < ROUTES.length;
 let voiceClips = null, voiceRouteTexts = null, voiceLoading = false, voiceSource = null, voiceReloaded = false;
 const voiceData = {}, voiceRequested = {};
 // 選んだ路線の文だけ取得する（全路線分を一度に取ると通信が重い）
@@ -1295,14 +1313,14 @@ function reloadVoiceManifest() {
   fetchVoiceManifest('reload');
 }
 function loadVoicePack() {
-  if (!VOICE_ROUTES.includes(routeIdx) || !window.fetch) return;
+  if (!hasVoice(routeIdx) || !window.fetch) return;
   if (voiceClips) { fetchRouteClips(routeIdx); return; }
   if (voiceLoading) return;
   fetchVoiceManifest('no-cache');
 }
 // 選んだ路線の録音がすべて揃っているか（揃っていなければ端末の読み上げも使えるようにしておく）
 function usingVoicePack() {
-  if (!VOICE_ROUTES.includes(routeIdx) || !voiceClips || !voiceRouteTexts) return false;
+  if (!hasVoice(routeIdx) || !voiceClips || !voiceRouteTexts) return false;
   const texts = voiceRouteTexts[routeIdx] || [];
   return texts.length > 0 && texts.every(t => voiceData[t]);
 }
@@ -1310,7 +1328,7 @@ function stopClip() {
   if (voiceSource) { try { voiceSource.stop(); } catch(e) {} voiceSource = null; }
 }
 function playClip(text) {
-  if (!VOICE_ROUTES.includes(routeIdx) || !voiceData[text]) return false;
+  if (!hasVoice(routeIdx) || !voiceData[text]) return false;
   const c = getActx(); if (!c) return false;
   stopClip();
   const token = ++speechSeq;
@@ -1373,7 +1391,7 @@ function unlockAll() {
 function selectRoute(idx) {
   routeIdx = idx;
   document.querySelectorAll('.route-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
-  document.body.classList.remove('shinkansen','chuo','azusa','tohoku','hokuriku','yamanote','komachi','enoden');
+  document.body.classList.remove('shinkansen','chuo','azusa','tohoku','hokuriku','yamanote','komachi','enoden','inokashira','romancecar');
   if (idx===1) document.body.classList.add('shinkansen');
   else if (idx===2) document.body.classList.add('chuo');
   else if (idx===3) document.body.classList.add('azusa');
@@ -1382,6 +1400,8 @@ function selectRoute(idx) {
   else if (idx===6) document.body.classList.add('yamanote');
   else if (idx===7) document.body.classList.add('komachi');
   else if (idx===8) document.body.classList.add('enoden');
+  else if (idx===9) document.body.classList.add('inokashira');
+  else if (idx===10) document.body.classList.add('romancecar');
   const r = ROUTES[idx];
   document.getElementById('lineBadge').textContent   = r.badge;
   document.getElementById('headerTitle').textContent = r.title;
@@ -1454,6 +1474,8 @@ const TRAIN_STYLES = [
   ['#cfd5dc', '#80c241', '#80c241', '#80c241', 'commuter'],
   ['#f4f5f7', '#c4213f', '#9aa3b0', '#c4213f', 'bullet'],
   ['#f2e7bd', '#2f7a4c', '#2f7a4c', '#2f7a4c', 'retro'],
+  ['#d7dbe0', null,      '#2fa9c9', '#2fa9c9', 'commuter'],
+  ['#f6f4f0', '#c8352c', '#c8352c', '#c8352c', 'express'],
 ];
 const CAR = 110; // 1両の長さ（図の中の単位）
 const trainUnits = cars => cars * CAR + 10;
@@ -1608,8 +1630,10 @@ const SEG_MINUTES = [
   [2,2,2,2,2,2,2,2,2,2,3,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
   [5,19,13,9,12,8,10,12,10,12,11,6,8,8,7,6,11,12,22,15,12,31],
   [2,2,2,2,3,3,3,2,4,3,3,2,1,2],
+  [1,2,2,1,1,2,1,2,1,2,2,1,2,2,2,2],
+  [27,15,22,15],
 ];
-const ROUTE_SPEED = [90,285,95,120,300,260,90,300,40]; // 画面の速さの目安（km/h）
+const ROUTE_SPEED = [90,285,95,120,300,260,90,300,40,70,110]; // 画面の速さの目安（km/h）
 const forwardSeg = seg => routeDir[routeIdx] ? SEG_MINUTES[routeIdx].length-1-seg : seg;
 function segSpeed(seg) {
   const k = forwardSeg(seg), r = routeIdx;
@@ -1619,6 +1643,7 @@ function segSpeed(seg) {
   if (r===1 && k === 10) return 110;
   if (r===1 && k === 9) return 150;
   if (r===8 && k === 5) return 25;                      // 江ノ島〜腰越は道路の上
+  if (r===10 && k === 3) return 60;                     // 小田原〜箱根湯本は山の中をゆっくり
   return ROUTE_SPEED[r];
 }
 // 駅iに着くのは、全体の時間のうち cum[i] の割合がすぎたとき
@@ -1677,11 +1702,16 @@ function moveWorld(pos, seg) {
   const world = document.getElementById('world');
   const width = widthOf('scene');
   const cum = timeline();
-  if (width !== worldSpacing) {
-    stopWorld(); worldSpacing = width; worldX = [0]; worldSeg = -1;
-    const {w, mean} = timelineCache;
-    // 駅の間の長さ = 時間 × 速さ（近すぎる駅は画面1枚分ほど離す）
-    for (let i = 0; i < N-1; i++) worldX.push(worldX[i] + width*0.9*Math.max(1, (w[i]/mean) * (segSpeed(i)/90)));
+  const key = width + ':' + totalMs;
+  if (key !== worldSpacing) {
+    stopWorld(); worldSpacing = key; worldX = [0]; worldSeg = -1;
+    // 駅の間の長さ = その区間にかかる秒数 × 景色と同じ速さ（選んだ時間が長いほど駅の間も長くなる）
+    // 景色と同じ割合（速さ^1.25）で速くし、近すぎる駅は画面1枚分ほど離す
+    for (let i = 0; i < N-1; i++) {
+      const secs = totalMs * (cum[i+1] - cum[i]) / 1000;
+      const pxPerSec = width * 0.086 * Math.pow(segSpeed(i)/90, 1.25);
+      worldX.push(worldX[i] + Math.max(width*0.9, secs * pxPerSec));
+    }
     for (let i = 0; i < N; i++) {
       const el = document.getElementById('world'+i);
       if (el) el.style.marginLeft = worldX[i] + 'px';
@@ -1713,6 +1743,7 @@ const kana = st => `<ruby>${st.name}<rt>${st.ruby}</rt></ruby>`;
 const BAR_STATIONS = [
   ['新宿','秋葉原','船橋'], ['広島','新大阪','名古屋'], ['立川','三鷹','新宿'], ['上諏訪','甲府','八王子'],
   ['仙台','盛岡','新青森'], ['長野','金沢','福井'], ['品川','新宿','上野'], ['仙台','盛岡','大曲'], ['江ノ島','鎌倉高校前','長谷'],
+  ['下北沢','明大前','久我山'], ['町田','本厚木','小田原'],
 ];
 let barPoints = [];
 function buildBar() {
@@ -1770,7 +1801,7 @@ function renderBar(pos) {
 }
 
 // 画面の文章にふりがなを付ける（読み上げの文章は変えない）
-const READINGS = {'秋田新幹線':'あきたしんかんせん','江ノ電':'えのでん','江ノ島電鉄':'えのしまでんてつ','上り':'のぼり','下り':'くだり','右回り':'みぎまわり','左回り':'ひだりまわり','内回り':'うちまわり','東ゆき':'ひがしゆき','西ゆき':'にしゆき','中央':'ちゅうおう','総武線':'そうぶせん','中央線':'ちゅうおうせん','東北新幹線':'とうほくしんかんせん','北陸新幹線':'ほくりくしんかんせん','新幹線':'しんかんせん','山手線':'やまのてせん','外回り':'そとまわり','一周':'いっしゅう','電車':'でんしゃ','全部':'ぜんぶ','駅':'えき','旅':'たび','時間':'じかん','半分':'はんぶん','準備':'じゅんび','到着':'とうちゃく','後片付':'あとかたづ','音楽':'おんがく'};
+const READINGS = {'井の頭線':'いのかしらせん','京王':'けいおう','小田急':'おだきゅう','各駅停車':'かくえきていしゃ','特急':'とっきゅう','秋田新幹線':'あきたしんかんせん','江ノ電':'えのでん','江ノ島電鉄':'えのしまでんてつ','上り':'のぼり','下り':'くだり','右回り':'みぎまわり','左回り':'ひだりまわり','内回り':'うちまわり','東ゆき':'ひがしゆき','西ゆき':'にしゆき','中央':'ちゅうおう','総武線':'そうぶせん','中央線':'ちゅうおうせん','東北新幹線':'とうほくしんかんせん','北陸新幹線':'ほくりくしんかんせん','新幹線':'しんかんせん','山手線':'やまのてせん','外回り':'そとまわり','一周':'いっしゅう','電車':'でんしゃ','全部':'ぜんぶ','駅':'えき','旅':'たび','時間':'じかん','半分':'はんぶん','準備':'じゅんび','到着':'とうちゃく','後片付':'あとかたづ','音楽':'おんがく'};
 function addFurigana(el) {
   if (!el) return;
   const dict = {...READINGS};
@@ -1810,14 +1841,30 @@ ROUTES.push({
   stations: [['藤沢','ふじさわ'],['石上','いしがみ'],['柳小路','やなぎこうじ'],['鵠沼','くげぬま'],['湘南海岸公園','しょうなんかいがんこうえん'],['江ノ島','えのしま'],['腰越','こしごえ'],['鎌倉高校前','かまくらこうこうまえ'],['七里ヶ浜','しちりがはま'],['稲村ヶ崎','いなむらがさき'],['極楽寺','ごくらくじ'],['長谷','はせ'],['由比ヶ浜','ゆいがはま'],['和田塚','わだづか'],['鎌倉','かまくら']]
     .map(([name,ruby],i) => ({name, ruby, num:'EN' + String(i+1).padStart(2,'0'), ms:[0,5,11,14].includes(i) ? 'key' : null})),
 });
+// 京王井の頭線（各駅停車）: 渋谷→吉祥寺の全17駅
+ROUTES.push({
+  badge:'京王井の頭線（各駅停車）', title:'🚃 渋谷 → 吉祥寺 あそびタイマー',
+  sub:'井の頭線が吉祥寺についたら あそびおわり', icon:'🚃', from:'渋谷', to:'吉祥寺',
+  endIcon:'🦆', endTitle:'🚃 吉祥寺に到着！', whistle:'train',
+  stations: [['渋谷','しぶや'],['神泉','しんせん'],['駒場東大前','こまばとうだいまえ'],['池ノ上','いけのうえ'],['下北沢','しもきたざわ'],['新代田','しんだいた'],['東松原','ひがしまつばら'],['明大前','めいだいまえ'],['永福町','えいふくちょう'],['西永福','にしえいふく'],['浜田山','はまだやま'],['高井戸','たかいど'],['富士見ヶ丘','ふじみがおか'],['久我山','くがやま'],['三鷹台','みたかだい'],['井の頭公園','いのかしらこうえん'],['吉祥寺','きちじょうじ']]
+    .map(([name,ruby],i) => ({name, ruby, num:'IN' + String(i+1).padStart(2,'0'), ms:[0,4,7,8,16].includes(i) ? 'key' : null})),
+});
+// 小田急ロマンスカー「はこね」: 新宿→箱根湯本（停車駅は列車によって違う。ここでは代表的な駅）
+ROUTES.push({
+  badge:'小田急ロマンスカー 特急はこね', title:'🚅 新宿 → 箱根湯本 あそびタイマー',
+  sub:'ロマンスカーが箱根湯本についたら あそびおわり', icon:'🚅', from:'新宿', to:'箱根湯本',
+  endIcon:'♨️', endTitle:'🚅 箱根湯本に到着！', whistle:'shinkansen',
+  stations: [['新宿','しんじゅく','OH01','key'],['町田','まちだ','OH27','key'],['本厚木','ほんあつぎ','OH34',null],['小田原','おだわら','OH47','key'],['箱根湯本','はこねゆもと','OH51','key']]
+    .map(([name,ruby,num,ms]) => ({name, ruby, num, ms})),
+});
 
 // 向き: 0 = もともとの向き、1 = 逆向き
 const routeDir = ROUTES.map(() => 0);
 const FORWARD_ROUTES = ROUTES.map(r => ({...r}));
 // 各路線の向きの名前 [もともとの向き, 逆向き]
-const DIR_NAMES = [['東ゆき','西ゆき'], ['上り','下り'], ['上り','下り'], ['上り','下り'], ['下り','上り'], ['下り','上り'], ['右回り','左回り'], ['下り','上り'], ['東ゆき','西ゆき']];
+const DIR_NAMES = [['東ゆき','西ゆき'], ['上り','下り'], ['上り','下り'], ['上り','下り'], ['下り','上り'], ['下り','上り'], ['右回り','左回り'], ['下り','上り'], ['東ゆき','西ゆき'], ['下り','上り'], ['下り','上り']];
 // 画面の左のボタン: 上り・右回り・東ゆき
-const DIR_ORDER = [[0,1],[0,1],[0,1],[0,1],[1,0],[1,0],[0,1],[1,0],[0,1]];
+const DIR_ORDER = [[0,1],[0,1],[0,1],[0,1],[1,0],[1,0],[0,1],[1,0],[0,1],[1,0],[1,0]];
 function reversedRoute(idx) {
   const r = FORWARD_ROUTES[idx], from = r.to, to = r.from, loop = idx === 6;
   const stations = r.stations.slice().reverse();
@@ -1875,13 +1922,17 @@ const ROUTE_LAND = [
   ['tokyo','city','rural','rural','rural','mountain','rural','mountain','mountain','rural','rural','rural','rural','rural','rural','rural','alps','alps','mountain','rural','rural','rural'],
   // 江ノ電: 藤沢→鎌倉
   spread(['town',6],['sea',3],['mountain',2],['town',3]),
+  // 井の頭線: 渋谷→吉祥寺（park の景色は東京タワーが入るので使わない）
+  spread(['city',1],['town',15]),
+  // ロマンスカー: 新宿→箱根湯本
+  ['town','rural','fuji','mountain'],
 ];
 // 新幹線・特急は、大きな駅の前後だけ街の風景にする
-const CITY_STATIONS = {'新函館北斗':'town','品川':'tokyo','東京':'tokyo','博多':'city','広島':'city','名古屋':'city','新大阪':'city','仙台':'city','新宿':'city',
+const CITY_STATIONS = {'町田':'town','本厚木':'town','小田原':'town','新函館北斗':'town','品川':'tokyo','東京':'tokyo','博多':'city','広島':'city','名古屋':'city','新大阪':'city','仙台':'city','新宿':'city',
   '小倉':'city','岡山':'city','京都':'town','姫路':'town','宇都宮':'town','郡山':'town','福島':'town','盛岡':'town','高崎':'town','長野':'town','富山':'town','金沢':'town','福井':'town','秋田':'town','松本':'town','甲府':'town','八戸':'town','新青森':'town'};
 function landAt(pos) {
   const seg = Math.max(0, Math.min(N-2, Math.floor(pos + 1e-9)));
-  if (![0,2,6,8].includes(routeIdx)) {
+  if (![0,2,6,8,9].includes(routeIdx)) {
     const near = Math.round(pos);
     const urban = STATIONS[near] && CITY_STATIONS[STATIONS[near].name];
     if (urban && Math.abs(pos - near) < 0.18) return urban;
@@ -2068,7 +2119,7 @@ function handleStart() {
       showToast(ROUTES[routeIdx].icon + ' ' + st0.name + 'を発車');
       if (announceOn && st1) {
         queueAnnouncement(function(){
-          if (running) speakText(st0.name + 'を発車しました。次は' + st1.name + 'です！');
+          if (running) speakText(departText(0, '！'));
         }, 1400); // ドアの音が終わってから
       }
     }
@@ -2096,6 +2147,10 @@ function tick() {
   if (remainMs <= 0) { finish(); }
 }
 
+// 「〇〇を発車しました。次は△△です」。次が終点なら「次は終点、△△です」（音声の文は録音と一字一句同じにすること）
+function departText(i, mark) {
+  return STATIONS[i].name + 'を発車しました。次は' + (i + 1 === N - 1 ? '終点、' : '') + STATIONS[i+1].name + 'です' + mark;
+}
 function onStationReached(idx) {
   const st = STATIONS[idx];
   const next = STATIONS[idx+1];
@@ -2104,7 +2159,7 @@ function onStationReached(idx) {
   if (announceOn) {
     const txt = isLast
       ? '終点、' + st.name + 'に到着しました。あそびじかん、しゅうりょうです。'
-      : st.name + 'を発車しました。次は' + next.name + 'です。';
+      : departText(idx, '。');
     speakText(coupleSpeech(idx) + txt);
   }
 }
