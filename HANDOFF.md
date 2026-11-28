@@ -10,7 +10,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**テスト版40の内容**。2026-11-28 に利用者の「本番OK」で反映）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=40 ＝ `ride-preview.html`（v40）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=41 ＝ `ride-preview.html`（v41）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -51,6 +51,17 @@ cp tests/train-timer.test.cjs /tmp/pv/tests/
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
   テスト版で路線・BGM・終点の動きなどを変えたら、ここで落ちたテストを本番反映時に直す
+
+## テスト版にあって本番にない変更（v41〜）
+- v41: 新幹線を4路線追加（路線11〜14）。どれも上り・下りを選べる。駅間の分数は概算
+  - 11 九州新幹線 つばめ: 博多→鹿児島中央（全12駅、KY01〜）
+  - 12 西九州新幹線 かもめ: 武雄温泉→長崎（全5駅、NK01〜）
+  - 13 上越新幹線 とき: 東京→新潟（各駅に停まる とき 12駅、JE01〜）
+  - 14 山形新幹線 つばさ: 東京→新庄（16駅、TB01〜）。福島まで やまびこ と連結し、福島で切り離し／連結する。停車駅は列車によって違うので、宇都宮・郡山に停まり山形線は各駅に停まる形にした
+  - 連結の仕組み（COUPLED）を一般化した: 連結駅 `at`、下りで相手が前か `ahead`、名前 `name`/`partnerName`/`pair`。やまびこの絵ははやぶさと同じE5（partner: 4）
+  - 新幹線の並び: 1行目 はやぶさ・こまち・つばさ・とき（東京から北へ）、2行目 かがやき・のぞみ・つばめ・かもめ（西へ）
+  - 新八代・本庄早稲田・嬉野温泉・かみのやま温泉は読みが途中で切れるので ACCENT でまとめた
+  - 本番反映のときは tests/train-timer.test.cjs の路線一覧を15路線（ボタン15個、つばめ12・かもめ5・とき12・つばさ16駅）に直す（今はテスト版で1件落ちる）
 
 ## 2026-11-28 に本番へ反映した変更（v37〜v40）
 今はテスト版と本番の差は、テスト版の表示（preview-label）と title だけ。

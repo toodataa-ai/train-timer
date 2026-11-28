@@ -351,6 +351,10 @@ body.komachi { --accent: #ff5a6e; }
 body.enoden { --accent: #4fb878; }
 body.inokashira { --accent: #3ab0d2; }
 body.romancecar { --accent: #ef5a47; }
+body.tsubame { --accent: #e3b54a; }
+body.kamome { --accent: #e0455e; }
+body.toki { --accent: #f08fb0; }
+body.tsubasa { --accent: #9a6fd8; }
 #rb0{order:1}#rb1{order:2}#rb2{order:3}#rb3{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb6{order:8}#rb8{order:9}
 /* さらに引いた映像 */
 .scene { height: clamp(188px, 31svh, 206px); }
@@ -403,7 +407,7 @@ body .route-selector .route-btn small { font-size: 8.5px; letter-spacing: -.02em
 body .route-selector #rb9, body .route-selector #rb10, body .route-selector #rb8 { grid-column: span 4; }
 body .route-selector #rb6 { grid-column: span 3; } /* 昔の「山手線は1行まるごと」の指定を打ち消す */
 .route-group { grid-column: 1 / -1; font-size: 11px; font-weight: 800; color: #8a92ad; letter-spacing: .08em; padding: 4px 2px 0; border-bottom: 1px solid var(--border); }
-#rgShinkansen{order:0}#rb1{order:1}#rb4{order:2}#rb7{order:3}#rb5{order:4}
+#rgShinkansen{order:0}#rb4{order:1}#rb7{order:2}#rb14{order:3}#rb13{order:4}#rb5{order:5}#rb1{order:6}#rb11{order:7}#rb12{order:8}
 #rgJR{order:10}#rb0{order:11}#rb2{order:12}#rb6{order:13}#rb3{order:14}
 #rgPrivate{order:20}#rb9{order:21}#rb10{order:22}#rb8{order:23}
 @media (max-width: 359px) { body .route-selector .route-btn, body .route-selector #rb6, body .route-selector #rb9, body .route-selector #rb10, body .route-selector #rb8 { grid-column: span 6; } }
@@ -433,7 +437,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版40】井の頭線・ロマンスカー追加・駅の速さ・「次は終点」・路線ボタンを新幹線／JR／私鉄に分けた</div>
+<div class="preview-label">【テスト版41】新幹線を追加（つばめ・かもめ・とき・つばさ）</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -453,6 +457,10 @@ body > .wake-panel[hidden] { display: none; }
   <button class="route-btn"        id="rb8" onclick="selectRoute(8)">🚋 江ノ電<br><small>藤沢→鎌倉</small></button>
   <button class="route-btn"        id="rb9" onclick="selectRoute(9)">🚃 井の頭線<br><small>渋谷→吉祥寺</small></button>
   <button class="route-btn"        id="rb10" onclick="selectRoute(10)">🚅 ロマンスカー<br><small>新宿→箱根湯本</small></button>
+  <button class="route-btn"        id="rb11" onclick="selectRoute(11)">🚄 つばめ<br><small>博多→鹿児島中央</small></button>
+  <button class="route-btn"        id="rb12" onclick="selectRoute(12)">🚄 かもめ<br><small>武雄温泉→長崎</small></button>
+  <button class="route-btn"        id="rb13" onclick="selectRoute(13)">🚄 とき<br><small>東京→新潟</small></button>
+  <button class="route-btn"        id="rb14" onclick="selectRoute(14)">🚄 つばさ<br><small>東京→新庄</small></button>
 </div>
 
 <div class="header">
@@ -1392,7 +1400,7 @@ function unlockAll() {
 function selectRoute(idx) {
   routeIdx = idx;
   document.querySelectorAll('.route-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
-  document.body.classList.remove('shinkansen','chuo','azusa','tohoku','hokuriku','yamanote','komachi','enoden','inokashira','romancecar');
+  document.body.classList.remove('shinkansen','chuo','azusa','tohoku','hokuriku','yamanote','komachi','enoden','inokashira','romancecar','tsubame','kamome','toki','tsubasa');
   if (idx===1) document.body.classList.add('shinkansen');
   else if (idx===2) document.body.classList.add('chuo');
   else if (idx===3) document.body.classList.add('azusa');
@@ -1403,6 +1411,10 @@ function selectRoute(idx) {
   else if (idx===8) document.body.classList.add('enoden');
   else if (idx===9) document.body.classList.add('inokashira');
   else if (idx===10) document.body.classList.add('romancecar');
+  else if (idx===11) document.body.classList.add('tsubame');
+  else if (idx===12) document.body.classList.add('kamome');
+  else if (idx===13) document.body.classList.add('toki');
+  else if (idx===14) document.body.classList.add('tsubasa');
   const r = ROUTES[idx];
   document.getElementById('lineBadge').textContent   = r.badge;
   document.getElementById('headerTitle').textContent = r.title;
@@ -1477,6 +1489,10 @@ const TRAIN_STYLES = [
   ['#f2e7bd', '#2f7a4c', '#2f7a4c', '#2f7a4c', 'retro'],
   ['#d7dbe0', null,      '#2fa9c9', '#2fa9c9', 'commuter'],
   ['#f6f4f0', '#c8352c', '#c8352c', '#c8352c', 'express'],
+  ['#f7f7f5', null,      '#c8102e', '#c9a14a', 'bullet'],
+  ['#f7f7f5', null,      '#b3122a', '#2a2a2a', 'bullet'],
+  ['#f4f5f7', '#1d3f86', '#e88aa8', '#1d3f86', 'bullet'],
+  ['#f4f5f7', '#6b3fa0', '#f2a900', '#6b3fa0', 'bullet'],
 ];
 const CAR = 110; // 1両の長さ（図の中の単位）
 const trainUnits = cars => cars * CAR + 10;
@@ -1560,18 +1576,23 @@ function trainSVG(idx, cars, prefix) {
   return o;
 }
 
-// はやぶさ(4)と こまち(7)は盛岡まで連結する。こまちは新青森寄りに連結される
-const COUPLED = {4: {partner: 7, cars: 4, partnerCars: 3}, 7: {partner: 4, cars: 3, partnerCars: 4}};
+// 連結して走る新幹線。partner は相手の絵（TRAIN_STYLES の番号）、ahead は下りで相手が前にいるか
+// はやぶさ(4)と こまち(7)は盛岡まで（こまちが新青森寄り）。つばさ(14)は福島まで やまびこと（やまびこが仙台寄り。絵ははやぶさと同じE5）
+const COUPLED = {
+  4:  {partner: 7, cars: 4, partnerCars: 3, at: '盛岡', atKana: 'もりおか', ahead: true,  name: 'はやぶさ', partnerName: 'こまち', pair: 'はやぶさ＋こまち'},
+  7:  {partner: 4, cars: 3, partnerCars: 4, at: '盛岡', atKana: 'もりおか', ahead: false, name: 'こまち', partnerName: 'はやぶさ', pair: 'はやぶさ＋こまち'},
+  14: {partner: 4, cars: 3, partnerCars: 4, at: '福島', atKana: 'ふくしま', ahead: true,  name: 'つばさ', partnerName: 'やまびこ', pair: 'やまびこ＋つばさ'},
+};
 function coupleInfo() {
   const c = COUPLED[routeIdx];
   if (!c) return null;
   const down = !routeDir[routeIdx];
-  const join = STATIONS.findIndex(s => s.name === '盛岡');
-  const side = (routeIdx === 4) === down ? 1 : -1; // 相手が右(+1)か左(-1)か
+  const join = STATIONS.findIndex(s => s.name === c.at);
+  const side = c.ahead === down ? 1 : -1; // 相手が右(+1)か左(-1)か
   return {...c, down, join, side};
 }
-// のぞみ(1)・かがやき(5)は5両、江ノ電(8)は2両、ほかは4両（はやぶさ・こまちは連結の COUPLED で決める）
-const carCount = idx => (idx === 1 || idx === 5) ? 5 : idx === 8 ? 2 : 4;
+// のぞみ(1)・かがやき(5)・つばめ(11)・かもめ(12)・とき(13)は5両、江ノ電(8)は2両、ほかは4両（はやぶさ・こまちは連結の COUPLED で決める）
+const carCount = idx => [1, 5, 11, 12, 13].includes(idx) ? 5 : idx === 8 ? 2 : 4;
 function drawTrain(el, svg, idx, cars, k, prefix) {
   const units = trainUnits(cars);
   svg.setAttribute('viewBox', `0 -9 ${units} 72`);
@@ -1608,15 +1629,15 @@ function placeTrains(pos) {
   setStyle(partner, 'left', (coupledX + (c.side > 0 ? w - overlap : overlap - pw) + c.side * t * width * 1.1) + 'px');
   partner.hidden = raw >= 1;
   chip.hidden = false;
-  const message = raw <= 0 ? 'はやぶさ＋こまち れんけつちゅう'
-    : raw < 1 ? (c.down ? 'もりおかで きりはなし！' : 'もりおかで れんけつ！')
-    : (routeIdx === 4 ? 'はやぶさ' : 'こまち') + 'だけで はしるよ';
+  const message = raw <= 0 ? c.pair + ' れんけつちゅう'
+    : raw < 1 ? (c.down ? c.atKana + 'で きりはなし！' : c.atKana + 'で れんけつ！')
+    : c.name + 'だけで はしるよ';
   if (chip.textContent !== message) chip.textContent = message;
 }
 function coupleSpeech(idx) {
   const c = coupleInfo();
   if (!c || idx !== c.join) return '';
-  const other = c.partner === 7 ? 'こまち' : 'はやぶさ';
+  const other = c.partnerName;
   return c.down ? `ここで${other}と切り離します。` : `${other}と連結しました。`;
 }
 
@@ -1633,12 +1654,17 @@ const SEG_MINUTES = [
   [2,2,2,2,3,3,3,2,4,3,3,2,1,2],
   [1,2,2,1,1,2,1,2,1,2,2,1,2,2,2,2],
   [27,15,22,15],
+  [12,6,7,8,8,10,13,15,7,12,12],
+  [7,10,8,8],
+  [5,19,13,9,9,13,14,12,14,11,13],
+  [5,19,26,30,14,35,10,6,11,9,11,7,7,9,18],
 ];
-const ROUTE_SPEED = [90,285,95,120,300,260,90,300,40,70,110]; // 画面の速さの目安（km/h）
+const ROUTE_SPEED = [90,285,95,120,300,260,90,300,40,70,110,260,260,240,275]; // 画面の速さの目安（km/h）
 const forwardSeg = seg => routeDir[routeIdx] ? SEG_MINUTES[routeIdx].length-1-seg : seg;
 function segSpeed(seg) {
   const k = forwardSeg(seg), r = routeIdx;
-  if ((r===4 || r===5 || r===7) && k < 2) return 120;   // 東京〜大宮はゆっくり
+  if ([4,5,7,13,14].includes(r) && k < 2) return 120;   // 東京〜大宮はゆっくり
+  if (r===14 && k >= 5) return 130;                     // つばさは福島から在来線の区間
   if (r===4 && k >= 17) return 260;                     // 盛岡より北
   if (r===7 && k >= 17) return 110;                     // こまちは盛岡から在来線の区間
   if (r===1 && k === 10) return 110;
@@ -1745,6 +1771,7 @@ const BAR_STATIONS = [
   ['新宿','秋葉原','船橋'], ['広島','新大阪','名古屋'], ['立川','三鷹','新宿'], ['上諏訪','甲府','八王子'],
   ['仙台','盛岡','新青森'], ['長野','金沢','福井'], ['品川','新宿','上野'], ['仙台','盛岡','大曲'], ['江ノ島','鎌倉高校前','長谷'],
   ['下北沢','明大前','久我山'], ['町田','本厚木','小田原'],
+  ['久留米','熊本','出水'], ['嬉野温泉','新大村','諫早'], ['高崎','越後湯沢','長岡'], ['宇都宮','福島','山形'],
 ];
 let barPoints = [];
 function buildBar() {
@@ -1802,7 +1829,7 @@ function renderBar(pos) {
 }
 
 // 画面の文章にふりがなを付ける（読み上げの文章は変えない）
-const READINGS = {'井の頭線':'いのかしらせん','京王':'けいおう','小田急':'おだきゅう','各駅停車':'かくえきていしゃ','特急':'とっきゅう','秋田新幹線':'あきたしんかんせん','江ノ電':'えのでん','江ノ島電鉄':'えのしまでんてつ','上り':'のぼり','下り':'くだり','右回り':'みぎまわり','左回り':'ひだりまわり','内回り':'うちまわり','東ゆき':'ひがしゆき','西ゆき':'にしゆき','中央':'ちゅうおう','総武線':'そうぶせん','中央線':'ちゅうおうせん','東北新幹線':'とうほくしんかんせん','北陸新幹線':'ほくりくしんかんせん','新幹線':'しんかんせん','山手線':'やまのてせん','外回り':'そとまわり','一周':'いっしゅう','電車':'でんしゃ','全部':'ぜんぶ','駅':'えき','旅':'たび','時間':'じかん','半分':'はんぶん','準備':'じゅんび','到着':'とうちゃく','後片付':'あとかたづ','音楽':'おんがく'};
+const READINGS = {'九州新幹線':'きゅうしゅうしんかんせん','西九州新幹線':'にしきゅうしゅうしんかんせん','上越新幹線':'じょうえつしんかんせん','山形新幹線':'やまがたしんかんせん','井の頭線':'いのかしらせん','京王':'けいおう','小田急':'おだきゅう','各駅停車':'かくえきていしゃ','特急':'とっきゅう','秋田新幹線':'あきたしんかんせん','江ノ電':'えのでん','江ノ島電鉄':'えのしまでんてつ','上り':'のぼり','下り':'くだり','右回り':'みぎまわり','左回り':'ひだりまわり','内回り':'うちまわり','東ゆき':'ひがしゆき','西ゆき':'にしゆき','中央':'ちゅうおう','総武線':'そうぶせん','中央線':'ちゅうおうせん','東北新幹線':'とうほくしんかんせん','北陸新幹線':'ほくりくしんかんせん','新幹線':'しんかんせん','山手線':'やまのてせん','外回り':'そとまわり','一周':'いっしゅう','電車':'でんしゃ','全部':'ぜんぶ','駅':'えき','旅':'たび','時間':'じかん','半分':'はんぶん','準備':'じゅんび','到着':'とうちゃく','後片付':'あとかたづ','音楽':'おんがく'};
 function addFurigana(el) {
   if (!el) return;
   const dict = {...READINGS};
@@ -1858,14 +1885,46 @@ ROUTES.push({
   stations: [['新宿','しんじゅく','OH01','key'],['町田','まちだ','OH27','key'],['本厚木','ほんあつぎ','OH34',null],['小田原','おだわら','OH47','key'],['箱根湯本','はこねゆもと','OH51','key']]
     .map(([name,ruby,num,ms]) => ({name, ruby, num, ms})),
 });
+// 九州新幹線 つばめ: 博多→鹿児島中央（全駅に停まる）
+ROUTES.push({
+  badge:'JR 九州新幹線 つばめ', title:'🚄 博多 → 鹿児島中央 あそびタイマー',
+  sub:'つばめが鹿児島中央についたら あそびおわり', icon:'🚄', from:'博多', to:'鹿児島中央',
+  endIcon:'🌋', endTitle:'🚄 鹿児島中央に到着！', whistle:'shinkansen',
+  stations: [['博多','はかた','key'],['新鳥栖','しんとす',null],['久留米','くるめ','key'],['筑後船小屋','ちくごふなごや',null],['新大牟田','しんおおむた',null],['新玉名','しんたまな',null],['熊本','くまもと','key'],['新八代','しんやつしろ',null],['新水俣','しんみなまた',null],['出水','いずみ',null],['川内','せんだい',null],['鹿児島中央','かごしまちゅうおう','key']]
+    .map(([name,ruby,ms],i) => ({name, ruby, ms, num:'KY' + String(i+1).padStart(2,'0')})),
+});
+// 西九州新幹線 かもめ: 武雄温泉→長崎（全駅に停まる）
+ROUTES.push({
+  badge:'JR 西九州新幹線 かもめ', title:'🚄 武雄温泉 → 長崎 あそびタイマー',
+  sub:'かもめが長崎についたら あそびおわり', icon:'🚄', from:'武雄温泉', to:'長崎',
+  endIcon:'⛪', endTitle:'🚄 長崎に到着！', whistle:'shinkansen',
+  stations: [['武雄温泉','たけおおんせん','key'],['嬉野温泉','うれしのおんせん',null],['新大村','しんおおむら',null],['諫早','いさはや','key'],['長崎','ながさき','key']]
+    .map(([name,ruby,ms],i) => ({name, ruby, ms, num:'NK' + String(i+1).padStart(2,'0')})),
+});
+// 上越新幹線 とき: 東京→新潟（各駅に停まる とき）
+ROUTES.push({
+  badge:'JR 上越新幹線 とき（東京発）', title:'🚄 東京 → 新潟 あそびタイマー',
+  sub:'ときが新潟についたら あそびおわり', icon:'🚄', from:'東京', to:'新潟',
+  endIcon:'🌾', endTitle:'🚄 新潟に到着！', whistle:'shinkansen',
+  stations: [['東京','とうきょう','key'],['上野','うえの',null],['大宮','おおみや','key'],['熊谷','くまがや',null],['本庄早稲田','ほんじょうわせだ',null],['高崎','たかさき','key'],['上毛高原','じょうもうこうげん',null],['越後湯沢','えちごゆざわ','key'],['浦佐','うらさ',null],['長岡','ながおか','key'],['燕三条','つばめさんじょう',null],['新潟','にいがた','key']]
+    .map(([name,ruby,ms],i) => ({name, ruby, ms, num:'JE' + String(i+1).padStart(2,'0')})),
+});
+// 山形新幹線 つばさ: 東京→新庄。福島まで やまびこ と連結（停車駅は列車によって違う。ここでは山形線の各駅に停まる つばさ）
+ROUTES.push({
+  badge:'JR 山形新幹線 つばさ（東京発）', title:'🚄 東京 → 新庄 あそびタイマー',
+  sub:'つばさで新庄まで！ 福島で やまびこと わかれるよ', icon:'🚄', from:'東京', to:'新庄',
+  endIcon:'🍒', endTitle:'🚄 新庄に到着！', whistle:'shinkansen',
+  stations: [['東京','とうきょう','key'],['上野','うえの',null],['大宮','おおみや','key'],['宇都宮','うつのみや',null],['郡山','こおりやま',null],['福島','ふくしま','key'],['米沢','よねざわ','key'],['高畠','たかはた',null],['赤湯','あかゆ',null],['かみのやま温泉','かみのやまおんせん',null],['山形','やまがた','key'],['天童','てんどう',null],['さくらんぼ東根','さくらんぼひがしね',null],['村山','むらやま',null],['大石田','おおいしだ',null],['新庄','しんじょう','key']]
+    .map(([name,ruby,ms],i) => ({name, ruby, ms, num:'TB' + String(i+1).padStart(2,'0')})),
+});
 
 // 向き: 0 = もともとの向き、1 = 逆向き
 const routeDir = ROUTES.map(() => 0);
 const FORWARD_ROUTES = ROUTES.map(r => ({...r}));
 // 各路線の向きの名前 [もともとの向き, 逆向き]
-const DIR_NAMES = [['東ゆき','西ゆき'], ['上り','下り'], ['上り','下り'], ['上り','下り'], ['下り','上り'], ['下り','上り'], ['右回り','左回り'], ['下り','上り'], ['東ゆき','西ゆき'], ['下り','上り'], ['下り','上り']];
+const DIR_NAMES = [['東ゆき','西ゆき'], ['上り','下り'], ['上り','下り'], ['上り','下り'], ['下り','上り'], ['下り','上り'], ['右回り','左回り'], ['下り','上り'], ['東ゆき','西ゆき'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り']];
 // 画面の左のボタン: 上り・右回り・東ゆき
-const DIR_ORDER = [[0,1],[0,1],[0,1],[0,1],[1,0],[1,0],[0,1],[1,0],[0,1],[1,0],[1,0]];
+const DIR_ORDER = [[0,1],[0,1],[0,1],[0,1],[1,0],[1,0],[0,1],[1,0],[0,1],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]];
 function reversedRoute(idx) {
   const r = FORWARD_ROUTES[idx], from = r.to, to = r.from, loop = idx === 6;
   const stations = r.stations.slice().reverse();
@@ -1927,9 +1986,17 @@ const ROUTE_LAND = [
   spread(['city',1],['town',15]),
   // ロマンスカー: 新宿→箱根湯本
   ['town','rural','fuji','mountain'],
+  // つばめ: 博多→鹿児島中央
+  ['city','rural','rural','rural','rural','rural','rural','mountain','sea','rural','mountain'],
+  // かもめ: 武雄温泉→長崎
+  ['mountain','rural','sea','town'],
+  // とき: 東京→新潟
+  ['tokyo','city','rural','rural','town','mountain','alps','rural','rural','rural','rural'],
+  // つばさ: 東京→新庄（福島から先は山形のさくらんぼ畑）
+  ['tokyo','city','rural','rural','rural','mountain','rural','orchard','orchard','town','orchard','orchard','rural','rural','mountain'],
 ];
 // 新幹線・特急は、大きな駅の前後だけ街の風景にする
-const CITY_STATIONS = {'町田':'town','本厚木':'town','小田原':'town','新函館北斗':'town','品川':'tokyo','東京':'tokyo','博多':'city','広島':'city','名古屋':'city','新大阪':'city','仙台':'city','新宿':'city',
+const CITY_STATIONS = {'町田':'town','本厚木':'town','小田原':'town','熊本':'city','鹿児島中央':'city','長崎':'city','新潟':'city','長岡':'town','山形':'town','新函館北斗':'town','品川':'tokyo','東京':'tokyo','博多':'city','広島':'city','名古屋':'city','新大阪':'city','仙台':'city','新宿':'city',
   '小倉':'city','岡山':'city','京都':'town','姫路':'town','宇都宮':'town','郡山':'town','福島':'town','盛岡':'town','高崎':'town','長野':'town','富山':'town','金沢':'town','福井':'town','秋田':'town','松本':'town','甲府':'town','八戸':'town','新青森':'town'};
 function landAt(pos) {
   const seg = Math.max(0, Math.min(N-2, Math.floor(pos + 1e-9)));
