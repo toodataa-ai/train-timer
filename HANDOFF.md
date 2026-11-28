@@ -26,7 +26,7 @@
   - 新しい希望は聞き比べ用の音声（今の読み・平ら・頭高など）を作って送り、選んでもらう
   - 直した音声は新しいファイル名（k〜.m4a）にして、端末に古い音声が残らないようにしている
 - 文を変えたら作り直す手順:
-  1. `python3 scripts/collect-voice-texts.py /tmp/texts.json`（駅名一覧 /tmp/texts.stations.json も出る）（python の playwright が必要。入っていない環境では `chromium.launch(executable_path='/opt/pw-browsers/chromium')` に変えた複製で動かした）
+  1. `python3 scripts/collect-voice-texts.py /tmp/texts.json`（本番とテスト版の両方から集める。駅名一覧 /tmp/texts.stations.json も出る）（python の playwright が必要。入っていない環境では `chromium.launch(executable_path='/opt/pw-browsers/chromium')` に変えた複製で動かした）
   2. VOICEVOX を準備（下記）し、`python3 scripts/build-voice.py /tmp/texts.json <ONNX Runtimeのso> <辞書フォルダ> <0.vvm>`
   3. `python3 scripts/fix-voice-reading.py <ONNX Runtimeのso> <辞書フォルダ> <0.vvm> /tmp/texts.stations.json`
   4. 出力される読み（カナ）を確認し、駅名の誤読がないか見る
@@ -61,6 +61,7 @@ cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
   - 本番反映のときは tests/train-timer.test.cjs の路線一覧（11路線・ボタン11個・井の頭線17駅・ロマンスカー5駅）を直す（今はテスト版で1件落ちる）
 - v38: 駅が景色より遅く近づいていた問題を修正。駅の間の長さを「区間の秒数 × 景色と同じ割合の速さ（width×0.086×(速さ/90)^1.25 px/秒）」にし、選んだ時間の長さに関係なく同じ速さで駅が流れるようにした（前は駅の間が画面1枚分ほどに固定で、時間を長くしたり駅が少ない路線だと極端に遅かった）。`moveWorld`
 - v39: 終点の1つ前の駅を出るときだけ「〇〇を発車しました。次は終点、△△です。」（`departText`）。19文を録音し、使わなくなった文の音声は消した。あわせて江ノ電の和田塚を「ワダ↓ズカ」とひと続きで読むようにした
+  - 注意: 音声ファイルと manifest は本番とテスト版で共通。v39 で一度、本番が使う文の音声まで消してしまい（本番の終点1つ前のアナウンスが端末の声になった）、すぐ戻した。今は collect-voice-texts.py が index.html と ride-preview.html の両方から文を集めるので、片方だけの文も残る
 
 ## 2026-11-26 に本番へ反映した変更（v16〜v36）
 今はテスト版と本番の差は、テスト版の表示（preview-label）と title だけ。
