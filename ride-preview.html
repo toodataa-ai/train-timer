@@ -351,7 +351,7 @@ body.komachi { --accent: #ff5a6e; }
 body.enoden { --accent: #4fb878; }
 body.inokashira { --accent: #3ab0d2; }
 body.romancecar { --accent: #ef5a47; }
-#rb0{order:1}#rb1{order:2}#rb2{order:3}#rb3{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb6{order:8;grid-column:auto}#rb8{order:9}
+#rb0{order:1}#rb1{order:2}#rb2{order:3}#rb3{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb6{order:8}#rb8{order:9}
 /* さらに引いた映像 */
 .scene { height: clamp(188px, 31svh, 206px); }
 .layer.far, .layer.mid, .layer.front { width: 225%; animation-name: scroll3; }
@@ -396,7 +396,17 @@ body.romancecar { --accent: #ef5a47; }
 body > .route-selector { grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 8px; }
 body .route-selector .route-btn { grid-column: auto; min-height: 40px; padding: 4px 1px; font-size: 12px; line-height: 1.3; border-radius: 8px; white-space: nowrap; }
 .route-selector .route-btn small { font-size: 9.5px; }
-#rb0{order:1}#rb2{order:2}#rb6{order:3}#rb1{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb3{order:8}#rb10{order:9}#rb9{order:10}#rb8{order:11}
+/* 路線ボタンは「新幹線・JR・私鉄」のまとまりで並べる（12列: 新幹線とJRは1行に4つ、私鉄は3つ） */
+body > .route-selector { grid-template-columns: repeat(12, minmax(0, 1fr)); row-gap: 4px; }
+body .route-selector .route-btn { grid-column: span 3; min-width: 0; overflow: hidden; }
+body .route-selector .route-btn small { font-size: 8.5px; letter-spacing: -.02em; }
+body .route-selector #rb9, body .route-selector #rb10, body .route-selector #rb8 { grid-column: span 4; }
+body .route-selector #rb6 { grid-column: span 3; } /* 昔の「山手線は1行まるごと」の指定を打ち消す */
+.route-group { grid-column: 1 / -1; font-size: 11px; font-weight: 800; color: #8a92ad; letter-spacing: .08em; padding: 4px 2px 0; border-bottom: 1px solid var(--border); }
+#rgShinkansen{order:0}#rb1{order:1}#rb4{order:2}#rb7{order:3}#rb5{order:4}
+#rgJR{order:10}#rb0{order:11}#rb2{order:12}#rb6{order:13}#rb3{order:14}
+#rgPrivate{order:20}#rb9{order:21}#rb10{order:22}#rb8{order:23}
+@media (max-width: 359px) { body .route-selector .route-btn, body .route-selector #rb6, body .route-selector #rb9, body .route-selector #rb10, body .route-selector #rb8 { grid-column: span 6; } }
 body > .dir-row { gap: 5px; margin: 0 0 6px; }
 .dir-row .route-btn-dir { min-height: 36px; padding: 4px 2px; font-size: 13px; line-height: 1.3; border-radius: 8px; white-space: nowrap; }
 .dir-row .route-btn-dir small { display: inline; margin-left: 6px; font-size: 10px; }
@@ -423,12 +433,15 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版39】京王井の頭線とロマンスカーを追加・駅が景色と同じ速さで近づくように・「次は終点、〇〇です」</div>
+<div class="preview-label">【テスト版40】井の頭線・ロマンスカー追加・駅の速さ・「次は終点」・路線ボタンを新幹線／JR／私鉄に分けた</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
 </div>
 <div class="route-selector">
+  <div class="route-group" id="rgShinkansen">新幹線</div>
+  <div class="route-group" id="rgJR">JR</div>
+  <div class="route-group" id="rgPrivate">私鉄</div>
   <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
   <button class="route-btn"        id="rb2" onclick="selectRoute(2)">🟠 中央線<br><small>高尾→東京</small></button>

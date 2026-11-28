@@ -10,7 +10,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**テスト版36の内容**。2026-11-26 に利用者の「本番OK」で反映）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=39 ＝ `ride-preview.html`（v39）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=40 ＝ `ride-preview.html`（v40）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -62,6 +62,7 @@ cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 - v38: 駅が景色より遅く近づいていた問題を修正。駅の間の長さを「区間の秒数 × 景色と同じ割合の速さ（width×0.086×(速さ/90)^1.25 px/秒）」にし、選んだ時間の長さに関係なく同じ速さで駅が流れるようにした（前は駅の間が画面1枚分ほどに固定で、時間を長くしたり駅が少ない路線だと極端に遅かった）。`moveWorld`
 - v39: 終点の1つ前の駅を出るときだけ「〇〇を発車しました。次は終点、△△です。」（`departText`）。19文を録音し、使わなくなった文の音声は消した。あわせて江ノ電の和田塚を「ワダ↓ズカ」とひと続きで読むようにした
   - 注意: 音声ファイルと manifest は本番とテスト版で共通。v39 で一度、本番が使う文の音声まで消してしまい（本番の終点1つ前のアナウンスが端末の声になった）、すぐ戻した。今は collect-voice-texts.py が index.html と ride-preview.html の両方から文を集めるので、片方だけの文も残る
+- v40: 路線ボタンを「新幹線（のぞみ・はやぶさ・こまち・かがやき）／JR（総武線・中央線・山手線・あずさ）／私鉄（井の頭線・ロマンスカー・江ノ電）」に分けて見出しを付けた。12列のグリッドで新幹線・JRは1行に4つ、私鉄は3つ。幅359px以下は1行に2つ。古い `#rb6 { grid-column: 1 / -1 }` を打ち消している
 
 ## 2026-11-26 に本番へ反映した変更（v16〜v36）
 今はテスト版と本番の差は、テスト版の表示（preview-label）と title だけ。
