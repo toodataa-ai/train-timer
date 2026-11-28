@@ -355,6 +355,10 @@ body.tsubame { --accent: #e3b54a; }
 body.kamome { --accent: #e0455e; }
 body.toki { --accent: #f08fb0; }
 body.tsubasa { --accent: #9a6fd8; }
+body.odakyu { --accent: #3d86e6; }
+body.toyoko { --accent: #ff5f6d; }
+body.denentoshi { --accent: #2fb58f; }
+body.keio { --accent: #e0479e; }
 #rb0{order:1}#rb1{order:2}#rb2{order:3}#rb3{order:4}#rb4{order:5}#rb7{order:6}#rb5{order:7}#rb6{order:8}#rb8{order:9}
 /* さらに引いた映像 */
 .scene { height: clamp(188px, 31svh, 206px); }
@@ -400,16 +404,16 @@ body.tsubasa { --accent: #9a6fd8; }
 body > .route-selector { grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 8px; }
 body .route-selector .route-btn { grid-column: auto; min-height: 40px; padding: 4px 1px; font-size: 12px; line-height: 1.3; border-radius: 8px; white-space: nowrap; }
 .route-selector .route-btn small { font-size: 9.5px; }
-/* 路線ボタンは「新幹線・JR・私鉄」のまとまりで並べる（12列: 新幹線とJRは1行に4つ、私鉄は3つ） */
+/* 路線ボタンは「新幹線・JR・私鉄」のまとまりで並べる（12列で1行に4つ） */
 body > .route-selector { grid-template-columns: repeat(12, minmax(0, 1fr)); row-gap: 4px; }
 body .route-selector .route-btn { grid-column: span 3; min-width: 0; overflow: hidden; }
 body .route-selector .route-btn small { font-size: 8.5px; letter-spacing: -.02em; }
-body .route-selector #rb9, body .route-selector #rb10, body .route-selector #rb8 { grid-column: span 4; }
-body .route-selector #rb6 { grid-column: span 3; } /* 昔の「山手線は1行まるごと」の指定を打ち消す */
+body .route-selector #rb6 { grid-column: span 3; }
+body .route-selector #rb10 { font-size: 10.5px; } /* 「ロマンスカー」は長いので少し小さく */ /* 昔の「山手線は1行まるごと」の指定を打ち消す */
 .route-group { grid-column: 1 / -1; font-size: 11px; font-weight: 800; color: #8a92ad; letter-spacing: .08em; padding: 4px 2px 0; border-bottom: 1px solid var(--border); }
 #rgShinkansen{order:0}#rb4{order:1}#rb7{order:2}#rb14{order:3}#rb13{order:4}#rb5{order:5}#rb1{order:6}#rb11{order:7}#rb12{order:8}
 #rgJR{order:10}#rb0{order:11}#rb2{order:12}#rb6{order:13}#rb3{order:14}
-#rgPrivate{order:20}#rb9{order:21}#rb10{order:22}#rb8{order:23}
+#rgPrivate{order:20}#rb18{order:21}#rb9{order:22}#rb15{order:23}#rb10{order:24}#rb16{order:25}#rb17{order:26}#rb8{order:27}
 @media (max-width: 359px) { body .route-selector .route-btn, body .route-selector #rb6, body .route-selector #rb9, body .route-selector #rb10, body .route-selector #rb8 { grid-column: span 6; } }
 body > .dir-row { gap: 5px; margin: 0 0 6px; }
 .dir-row .route-btn-dir { min-height: 36px; padding: 4px 2px; font-size: 13px; line-height: 1.3; border-radius: 8px; white-space: nowrap; }
@@ -437,7 +441,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版41】新幹線を追加（つばめ・かもめ・とき・つばさ）</div>
+<div class="preview-label">【テスト版42】私鉄4路線追加・停車駅の見直し・総武線と山手線をE235系に・井の頭線の色</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -461,6 +465,10 @@ body > .wake-panel[hidden] { display: none; }
   <button class="route-btn"        id="rb12" onclick="selectRoute(12)">🚄 かもめ<br><small>武雄温泉→長崎</small></button>
   <button class="route-btn"        id="rb13" onclick="selectRoute(13)">🚄 とき<br><small>東京→新潟</small></button>
   <button class="route-btn"        id="rb14" onclick="selectRoute(14)">🚄 つばさ<br><small>東京→新庄</small></button>
+  <button class="route-btn"        id="rb15" onclick="selectRoute(15)">🔵 小田急線<br><small>新宿→小田原</small></button>
+  <button class="route-btn"        id="rb16" onclick="selectRoute(16)">🔴 東横線<br><small>渋谷→横浜</small></button>
+  <button class="route-btn"        id="rb17" onclick="selectRoute(17)">🟢 田園都市線<br><small>渋谷→中央林間</small></button>
+  <button class="route-btn"        id="rb18" onclick="selectRoute(18)">🟣 京王線<br><small>新宿→京王八王子</small></button>
 </div>
 
 <div class="header">
@@ -1409,7 +1417,7 @@ function unlockAll() {
 function selectRoute(idx) {
   routeIdx = idx;
   document.querySelectorAll('.route-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
-  document.body.classList.remove('shinkansen','chuo','azusa','tohoku','hokuriku','yamanote','komachi','enoden','inokashira','romancecar','tsubame','kamome','toki','tsubasa');
+  document.body.classList.remove('shinkansen','chuo','azusa','tohoku','hokuriku','yamanote','komachi','enoden','inokashira','romancecar','tsubame','kamome','toki','tsubasa','odakyu','toyoko','denentoshi','keio');
   if (idx===1) document.body.classList.add('shinkansen');
   else if (idx===2) document.body.classList.add('chuo');
   else if (idx===3) document.body.classList.add('azusa');
@@ -1418,12 +1426,16 @@ function selectRoute(idx) {
   else if (idx===6) document.body.classList.add('yamanote');
   else if (idx===7) document.body.classList.add('komachi');
   else if (idx===8) document.body.classList.add('enoden');
-  else if (idx===9) document.body.classList.add('inokashira');
+  else if (idx===9) { document.body.classList.add('inokashira'); TRAIN_STYLES[9][5] = INOKASHIRA_COLORS[Math.floor(Math.random() * INOKASHIRA_COLORS.length)]; }
   else if (idx===10) document.body.classList.add('romancecar');
   else if (idx===11) document.body.classList.add('tsubame');
   else if (idx===12) document.body.classList.add('kamome');
   else if (idx===13) document.body.classList.add('toki');
   else if (idx===14) document.body.classList.add('tsubasa');
+  else if (idx===15) document.body.classList.add('odakyu');
+  else if (idx===16) document.body.classList.add('toyoko');
+  else if (idx===17) document.body.classList.add('denentoshi');
+  else if (idx===18) document.body.classList.add('keio');
   const r = ROUTES[idx];
   document.getElementById('lineBadge').textContent   = r.badge;
   document.getElementById('headerTitle').textContent = r.title;
@@ -1487,22 +1499,28 @@ function layoutMap() {
 let rideSeg = -1;
 // 路線ごとの車体色: [車体, 屋根側の色, 帯, 細帯, 形]
 const TRAIN_STYLES = [
-  ['#cfd5dc', null,      '#f5c800', '#f5c800', 'commuter'],
+  ['#d9dde2', null,      '#f5c800', '#f5c800', 'e235'],
   ['#f7f8fa', null,      '#1556b0', '#1556b0', 'bullet'],
   ['#cfd5dc', null,      '#f15a22', '#f15a22', 'commuter'],
   ['#eef0f3', '#3a3d46', '#8a4bb5', '#8a4bb5', 'express'],
   ['#f4f5f7', '#118a72', '#e4558f', null,      'bullet'],
   ['#f4f5f7', '#1d3f86', '#c8843c', '#1d3f86', 'bullet'],
-  ['#cfd5dc', '#80c241', '#80c241', '#80c241', 'commuter'],
+  ['#d9dde2', null,      '#80c241', '#80c241', 'e235'],
   ['#f4f5f7', '#c4213f', '#9aa3b0', '#c4213f', 'bullet'],
   ['#f2e7bd', '#2f7a4c', '#2f7a4c', '#2f7a4c', 'retro'],
-  ['#d7dbe0', null,      '#2fa9c9', '#2fa9c9', 'commuter'],
+  ['#d7dbe0', null,      '#7fb8d9', null,      'commuter', '#5fb3b3'], // 井の頭線1000系: 前面の色は選ぶたびに7色から
   ['#f6f4f0', '#c8352c', '#c8352c', '#c8352c', 'express'],
   ['#f7f7f5', null,      '#c8102e', '#c9a14a', 'bullet'],
   ['#f7f7f5', null,      '#b3122a', '#2a2a2a', 'bullet'],
   ['#f4f5f7', '#1d3f86', '#e88aa8', '#1d3f86', 'bullet'],
   ['#f4f5f7', '#6b3fa0', '#f2a900', '#6b3fa0', 'bullet'],
+  ['#d7dbe0', null,      '#2d6fd0', '#2d6fd0', 'commuter'],
+  ['#d7dbe0', null,      '#e5004f', '#e5004f', 'commuter'],
+  ['#eef0f2', null,      '#1aa37a', '#1aa37a', 'commuter'],
+  ['#d7dbe0', null,      '#c8102e', '#1f3c88', 'commuter'],
 ];
+// 井の頭線1000系の前面の色（編成ごとに7色。ブルーグリーン・アイボリー・サーモンピンク・ライトグリーン・バイオレット・オレンジベージュ・ライトブルー）
+const INOKASHIRA_COLORS = ['#3fa7a0','#efe3b8','#f2a08a','#9fd37a','#a58fd6','#efb07a','#7fbbe6'];
 const CAR = 110; // 1両の長さ（図の中の単位）
 const trainUnits = cars => cars * CAR + 10;
 function bogie(c) {
@@ -1513,15 +1531,16 @@ function bogie(c) {
 // 1両分を描く。右向きの先頭車を基本にし、最後尾は左右反転して使う
 function carSVG(idx, end, uid, panta) {
   const gid = uid.replace(/\d+$/, '');
-  const [body, top, band, thin, kind] = TRAIN_STYLES[idx];
+  const [body, top, band, thin, kind, mask] = TRAIN_STYLES[idx];
   const rect = (x,y,w,h,fill,rx=0,extra='') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" ${extra}/>`;
   const shape = !end ? 'M2 13Q2 10 6 10H104Q108 10 108 13V47H2Z' : {
     commuter: 'M2 13Q2 10 5 10H96Q104 10 106 18L109 34V47H2Z',
+    e235:     'M2 13Q2 10 5 10H95Q105 10 107 20L109 34V47H2Z',
     express:  'M2 13Q2 10 5 10H72C87 11 98 22 107 34Q111 41 107 47H2Z',
     bullet:   'M2 14Q2 11 5 11H42C64 12 71 27 90 32C104 35 110 40 109 43Q108 47 99 47H2Z',
     retro:    'M2 15Q2 10 8 10H92Q106 11 108 26V47H2Z',
   }[kind];
-  const roof = top || (kind==='commuter' ? '#aab1bc' : body);
+  const roof = top || (kind==='commuter' || kind==='e235' ? '#aab1bc' : body);
   const win = (x,y,w,h,rx=1.5) => rect(x,y,w,h,`url(#${gid}glass)`,rx,'stroke="#59606d" stroke-width=".7"');
   const door = x => rect(x,15.5,10,30.5,'none',1,'stroke="#5d6470" stroke-width=".8"') + win(x+1.3,19,2.7,10,.8) + win(x+6,19,2.7,10,.8);
   let o = '';
@@ -1530,7 +1549,14 @@ function carSVG(idx, end, uid, panta) {
   o += rect(24,3,30,4,'#7d8490',1.5);
   o += `<clipPath id="${uid}"><path d="${shape}"/></clipPath><g clip-path="url(#${uid})">` + rect(0,0,CAR+4,63,body);
   if (kind==='commuter') {
-    o += rect(0,12.5,CAR,3,band) + rect(0,31,CAR,5,band);
+    // 細い帯(thin)は窓の上、太い帯(band)は窓の下。thin が無い車両（井の頭線）は窓の下に細い線だけ
+    if (thin) o += rect(0,12.5,CAR,3,thin) + rect(0,31,CAR,5,band);
+    else o += rect(0,31.5,CAR,2.2,mask || band);
+    if (end && mask) o += `<path d="M84 10H96Q104 10 106 18L109 34V47H84Z" fill="${mask}"/>` + rect(84,10,1.2,37,"#9aa3b0"); // 前面の色（1000系）
+  } else if (kind==='e235') {
+    // E235系: 帯は横ではなくドアのところに縦。前面は黒に線の色
+    [7,36,65].concat(end ? [] : [94]).forEach(x => o += rect(x-1.5,11,13,36,band));
+    if (end) o += `<path d="M86 10H95Q105 10 107 20L109 34V47H86Z" fill="#1c2029"/>` + rect(86,38,24,9,band);
   } else if (kind==='express') {
     o += rect(0,16,CAR,14,top) + rect(0,35,CAR,4,band);
   } else if (kind==='retro') {
@@ -1543,7 +1569,7 @@ function carSVG(idx, end, uid, panta) {
     o += rect(0,32,CAR+4,3.4,band) + rect(0,37,CAR+4,1.4,thin);
   }
   o += rect(0,0,CAR+4,47,`url(#${gid}shade)`) + '</g>';
-  if (kind==='commuter') {
+  if (kind==='commuter' || kind==='e235') {
     [7,36,65].forEach(x => o += door(x));
     [19,48].forEach(x => o += win(x,18,7,11) + win(x+8,18,7,11));
     if (end) o += `<path d="M90 15H96Q100 15 102 20L105 30H90Z" fill="url(#${gid}glass)" stroke="#2b303b"/>` + rect(90,11.5,9,2.4,'#1c212c',.8);
@@ -1558,7 +1584,7 @@ function carSVG(idx, end, uid, panta) {
                      : `<path d="M50 15Q61 18 70 26L58 25Q54 21 47 15Z" fill="url(#${gid}glass)" stroke="#2b303b" stroke-width=".8"/>`;
   }
   o += `<path d="${shape}" fill="none" stroke="#4b515f" stroke-width="1"/>`;
-  if (end) { const lx = kind==='bullet' ? 98 : kind==='express' ? 102 : 103; o += `<ellipse class="lamp" cx="${lx}" cy="39.5" rx="3" ry="1.8" fill="${end==='tail'?'#ff4a55':'#fffbe0'}"/>`; }
+  if (end) { const lx = kind==='bullet' ? 98 : kind==='express' ? 102 : kind==='e235' ? 104 : 103; o += `<ellipse class="lamp" cx="${lx}" cy="39.5" rx="3" ry="1.8" fill="${end==='tail'?'#ff4a55':'#fffbe0'}"/>`; }
   o += rect(3,47,end?98:104,2.8,'#2f333e') + rect(40,49,28,6,'#474d5a',1);
   if (kind !== 'retro') o += bogie(20) + bogie(86);
   return o;
@@ -1662,13 +1688,17 @@ const SEG_MINUTES = [
   [5,19,13,9,12,8,10,12,10,12,11,6,8,8,7,6,11,12,22,15,12,31],
   [2,2,2,2,3,3,3,2,4,3,3,2,1,2],
   [1,2,2,1,1,2,1,2,1,2,2,1,2,2,2,2],
-  [27,15,22,15],
+  [20,8,3,9,5,7,7,18,15],
   [12,6,7,8,8,10,13,15,7,12,12],
   [7,10,8,8],
   [5,19,13,9,9,13,14,12,14,11,13],
   [5,19,26,30,14,35,10,6,11,9,11,7,7,9,18],
+  [5,3,4,3,5,2,5,8,3,9,5,3,3,3,2,4,4,6,3,8],
+  [2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,3],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [4,2,7,6,6,2,3,4,4,3],
 ];
-const ROUTE_SPEED = [90,285,95,120,300,260,90,300,40,70,110,260,260,240,275]; // 画面の速さの目安（km/h）
+const ROUTE_SPEED = [90,285,95,120,300,260,90,300,40,70,110,260,260,240,275,95,80,80,105]; // 画面の速さの目安（km/h）
 const forwardSeg = seg => routeDir[routeIdx] ? SEG_MINUTES[routeIdx].length-1-seg : seg;
 function segSpeed(seg) {
   const k = forwardSeg(seg), r = routeIdx;
@@ -1679,7 +1709,7 @@ function segSpeed(seg) {
   if (r===1 && k === 10) return 110;
   if (r===1 && k === 9) return 150;
   if (r===8 && k === 5) return 25;                      // 江ノ島〜腰越は道路の上
-  if (r===10 && k === 3) return 60;                     // 小田原〜箱根湯本は山の中をゆっくり
+  if (r===10 && k === 8) return 60;                     // 小田原〜箱根湯本は山の中をゆっくり
   return ROUTE_SPEED[r];
 }
 // 駅iに着くのは、全体の時間のうち cum[i] の割合がすぎたとき
@@ -1779,8 +1809,9 @@ const kana = st => `<ruby>${st.name}<rt>${st.ruby}</rt></ruby>`;
 const BAR_STATIONS = [
   ['新宿','秋葉原','船橋'], ['広島','新大阪','名古屋'], ['立川','三鷹','新宿'], ['上諏訪','甲府','八王子'],
   ['仙台','盛岡','新青森'], ['長野','金沢','福井'], ['品川','新宿','上野'], ['仙台','盛岡','大曲'], ['江ノ島','鎌倉高校前','長谷'],
-  ['下北沢','明大前','久我山'], ['町田','本厚木','小田原'],
+  ['下北沢','明大前','久我山'], ['町田','本厚木','秦野'],
   ['久留米','熊本','出水'], ['嬉野温泉','新大村','諫早'], ['高崎','越後湯沢','長岡'], ['宇都宮','福島','山形'],
+  ['新百合ヶ丘','町田','本厚木'], ['中目黒','自由が丘','武蔵小杉'], ['二子玉川','たまプラーザ','長津田'], ['明大前','調布','聖蹟桜ヶ丘'],
 ];
 let barPoints = [];
 function buildBar() {
@@ -1838,7 +1869,7 @@ function renderBar(pos) {
 }
 
 // 画面の文章にふりがなを付ける（読み上げの文章は変えない）
-const READINGS = {'九州新幹線':'きゅうしゅうしんかんせん','西九州新幹線':'にしきゅうしゅうしんかんせん','上越新幹線':'じょうえつしんかんせん','山形新幹線':'やまがたしんかんせん','井の頭線':'いのかしらせん','京王':'けいおう','小田急':'おだきゅう','各駅停車':'かくえきていしゃ','特急':'とっきゅう','秋田新幹線':'あきたしんかんせん','江ノ電':'えのでん','江ノ島電鉄':'えのしまでんてつ','上り':'のぼり','下り':'くだり','右回り':'みぎまわり','左回り':'ひだりまわり','内回り':'うちまわり','東ゆき':'ひがしゆき','西ゆき':'にしゆき','中央':'ちゅうおう','総武線':'そうぶせん','中央線':'ちゅうおうせん','東北新幹線':'とうほくしんかんせん','北陸新幹線':'ほくりくしんかんせん','新幹線':'しんかんせん','山手線':'やまのてせん','外回り':'そとまわり','一周':'いっしゅう','電車':'でんしゃ','全部':'ぜんぶ','駅':'えき','旅':'たび','時間':'じかん','半分':'はんぶん','準備':'じゅんび','到着':'とうちゃく','後片付':'あとかたづ','音楽':'おんがく'};
+const READINGS = {'小田急小田原線':'おだきゅうおだわらせん','小田急線':'おだきゅうせん','東急東横線':'とうきゅうとうよこせん','東横線':'とうよこせん','東急田園都市線':'とうきゅうでんえんとしせん','田園都市線':'でんえんとしせん','京王線':'けいおうせん','急行':'きゅうこう','九州新幹線':'きゅうしゅうしんかんせん','西九州新幹線':'にしきゅうしゅうしんかんせん','上越新幹線':'じょうえつしんかんせん','山形新幹線':'やまがたしんかんせん','井の頭線':'いのかしらせん','京王':'けいおう','小田急':'おだきゅう','各駅停車':'かくえきていしゃ','特急':'とっきゅう','秋田新幹線':'あきたしんかんせん','江ノ電':'えのでん','江ノ島電鉄':'えのしまでんてつ','上り':'のぼり','下り':'くだり','右回り':'みぎまわり','左回り':'ひだりまわり','内回り':'うちまわり','東ゆき':'ひがしゆき','西ゆき':'にしゆき','中央':'ちゅうおう','総武線':'そうぶせん','中央線':'ちゅうおうせん','東北新幹線':'とうほくしんかんせん','北陸新幹線':'ほくりくしんかんせん','新幹線':'しんかんせん','山手線':'やまのてせん','外回り':'そとまわり','一周':'いっしゅう','電車':'でんしゃ','全部':'ぜんぶ','駅':'えき','旅':'たび','時間':'じかん','半分':'はんぶん','準備':'じゅんび','到着':'とうちゃく','後片付':'あとかたづ','音楽':'おんがく'};
 function addFurigana(el) {
   if (!el) return;
   const dict = {...READINGS};
@@ -1886,12 +1917,12 @@ ROUTES.push({
   stations: [['渋谷','しぶや'],['神泉','しんせん'],['駒場東大前','こまばとうだいまえ'],['池ノ上','いけのうえ'],['下北沢','しもきたざわ'],['新代田','しんだいた'],['東松原','ひがしまつばら'],['明大前','めいだいまえ'],['永福町','えいふくちょう'],['西永福','にしえいふく'],['浜田山','はまだやま'],['高井戸','たかいど'],['富士見ヶ丘','ふじみがおか'],['久我山','くがやま'],['三鷹台','みたかだい'],['井の頭公園','いのかしらこうえん'],['吉祥寺','きちじょうじ']]
     .map(([name,ruby],i) => ({name, ruby, num:'IN' + String(i+1).padStart(2,'0'), ms:[0,4,7,8,16].includes(i) ? 'key' : null})),
 });
-// 小田急ロマンスカー「はこね」: 新宿→箱根湯本（停車駅は列車によって違う。ここでは代表的な駅）
+// 小田急ロマンスカー「はこね」: 新宿→箱根湯本（停車駅は列車によって違うので、はこねが停まることのある駅をすべて入れた）
 ROUTES.push({
   badge:'小田急ロマンスカー 特急はこね', title:'🚅 新宿 → 箱根湯本 あそびタイマー',
   sub:'ロマンスカーが箱根湯本についたら あそびおわり', icon:'🚅', from:'新宿', to:'箱根湯本',
   endIcon:'♨️', endTitle:'🚅 箱根湯本に到着！', whistle:'shinkansen',
-  stations: [['新宿','しんじゅく','OH01','key'],['町田','まちだ','OH27','key'],['本厚木','ほんあつぎ','OH34',null],['小田原','おだわら','OH47','key'],['箱根湯本','はこねゆもと','OH51','key']]
+  stations: [['新宿','しんじゅく','OH01','key'],['新百合ヶ丘','しんゆりがおか','OH23',null],['町田','まちだ','OH27','key'],['相模大野','さがみおおの','OH28',null],['海老名','えびな','OH32',null],['本厚木','ほんあつぎ','OH34','key'],['伊勢原','いせはら','OH36',null],['秦野','はだの','OH39',null],['小田原','おだわら','OH47','key'],['箱根湯本','はこねゆもと','OH51','key']]
     .map(([name,ruby,num,ms]) => ({name, ruby, num, ms})),
 });
 // 九州新幹線 つばめ: 博多→鹿児島中央（全駅に停まる）
@@ -1926,14 +1957,122 @@ ROUTES.push({
   stations: [['東京','とうきょう','key'],['上野','うえの',null],['大宮','おおみや','key'],['宇都宮','うつのみや',null],['郡山','こおりやま',null],['福島','ふくしま','key'],['米沢','よねざわ','key'],['高畠','たかはた',null],['赤湯','あかゆ',null],['かみのやま温泉','かみのやまおんせん',null],['山形','やまがた','key'],['天童','てんどう',null],['さくらんぼ東根','さくらんぼひがしね',null],['村山','むらやま',null],['大石田','おおいしだ',null],['新庄','しんじょう','key']]
     .map(([name,ruby,ms],i) => ({name, ruby, ms, num:'TB' + String(i+1).padStart(2,'0')})),
 });
+// 小田急小田原線 急行: 新宿→小田原（急行の停車駅21駅）
+ROUTES.push({
+  badge:'小田急小田原線（急行）', title:'🚃 新宿 → 小田原 あそびタイマー',
+  sub:'電車が小田原についたら あそびおわり', icon:'🚃', from:'新宿', to:'小田原',
+  endIcon:'🏯', endTitle:'🚃 小田原に到着！', whistle:'train',
+  stations: [
+    {name:'新宿', ruby:'しんじゅく', num:'OH01', ms:'key'},
+    {name:'代々木上原', ruby:'よよぎうえはら', num:'OH05', ms:null},
+    {name:'下北沢', ruby:'しもきたざわ', num:'OH07', ms:'key'},
+    {name:'経堂', ruby:'きょうどう', num:'OH13', ms:null},
+    {name:'成城学園前', ruby:'せいじょうがくえんまえ', num:'OH14', ms:null},
+    {name:'登戸', ruby:'のぼりと', num:'OH18', ms:null},
+    {name:'向ヶ丘遊園', ruby:'むこうがおかゆうえん', num:'OH19', ms:null},
+    {name:'新百合ヶ丘', ruby:'しんゆりがおか', num:'OH23', ms:'key'},
+    {name:'町田', ruby:'まちだ', num:'OH27', ms:'key'},
+    {name:'相模大野', ruby:'さがみおおの', num:'OH28', ms:null},
+    {name:'海老名', ruby:'えびな', num:'OH32', ms:'key'},
+    {name:'本厚木', ruby:'ほんあつぎ', num:'OH34', ms:'key'},
+    {name:'愛甲石田', ruby:'あいこういしだ', num:'OH35', ms:null},
+    {name:'伊勢原', ruby:'いせはら', num:'OH36', ms:null},
+    {name:'鶴巻温泉', ruby:'つるまきおんせん', num:'OH37', ms:null},
+    {name:'東海大学前', ruby:'とうかいだいがくまえ', num:'OH38', ms:null},
+    {name:'秦野', ruby:'はだの', num:'OH39', ms:'key'},
+    {name:'渋沢', ruby:'しぶさわ', num:'OH40', ms:null},
+    {name:'新松田', ruby:'しんまつだ', num:'OH41', ms:null},
+    {name:'開成', ruby:'かいせい', num:'OH42', ms:null},
+    {name:'小田原', ruby:'おだわら', num:'OH47', ms:'key'}],
+});
+// 東急東横線 各駅停車: 渋谷→横浜（全21駅）
+ROUTES.push({
+  badge:'東急東横線（各駅停車）', title:'🚃 渋谷 → 横浜 あそびタイマー',
+  sub:'電車が横浜についたら あそびおわり', icon:'🚃', from:'渋谷', to:'横浜',
+  endIcon:'⚓', endTitle:'🚃 横浜に到着！', whistle:'train',
+  stations: [
+    {name:'渋谷', ruby:'しぶや', num:'TY01', ms:'key'},
+    {name:'代官山', ruby:'だいかんやま', num:'TY02', ms:null},
+    {name:'中目黒', ruby:'なかめぐろ', num:'TY03', ms:'key'},
+    {name:'祐天寺', ruby:'ゆうてんじ', num:'TY04', ms:null},
+    {name:'学芸大学', ruby:'がくげいだいがく', num:'TY05', ms:null},
+    {name:'都立大学', ruby:'とりつだいがく', num:'TY06', ms:null},
+    {name:'自由が丘', ruby:'じゆうがおか', num:'TY07', ms:'key'},
+    {name:'田園調布', ruby:'でんえんちょうふ', num:'TY08', ms:null},
+    {name:'多摩川', ruby:'たまがわ', num:'TY09', ms:null},
+    {name:'新丸子', ruby:'しんまるこ', num:'TY10', ms:null},
+    {name:'武蔵小杉', ruby:'むさしこすぎ', num:'TY11', ms:'key'},
+    {name:'元住吉', ruby:'もとすみよし', num:'TY12', ms:null},
+    {name:'日吉', ruby:'ひよし', num:'TY13', ms:null},
+    {name:'綱島', ruby:'つなしま', num:'TY14', ms:null},
+    {name:'大倉山', ruby:'おおくらやま', num:'TY15', ms:null},
+    {name:'菊名', ruby:'きくな', num:'TY16', ms:'key'},
+    {name:'妙蓮寺', ruby:'みょうれんじ', num:'TY17', ms:null},
+    {name:'白楽', ruby:'はくらく', num:'TY18', ms:null},
+    {name:'東白楽', ruby:'ひがしはくらく', num:'TY19', ms:null},
+    {name:'反町', ruby:'たんまち', num:'TY20', ms:null},
+    {name:'横浜', ruby:'よこはま', num:'TY21', ms:'key'}],
+});
+// 東急田園都市線 各駅停車: 渋谷→中央林間（全27駅）
+ROUTES.push({
+  badge:'東急田園都市線（各駅停車）', title:'🚃 渋谷 → 中央林間 あそびタイマー',
+  sub:'電車が中央林間についたら あそびおわり', icon:'🚃', from:'渋谷', to:'中央林間',
+  endIcon:'🌳', endTitle:'🚃 中央林間に到着！', whistle:'train',
+  stations: [
+    {name:'渋谷', ruby:'しぶや', num:'DT01', ms:'key'},
+    {name:'池尻大橋', ruby:'いけじりおおはし', num:'DT02', ms:null},
+    {name:'三軒茶屋', ruby:'さんげんぢゃや', num:'DT03', ms:'key'},
+    {name:'駒沢大学', ruby:'こまざわだいがく', num:'DT04', ms:null},
+    {name:'桜新町', ruby:'さくらしんまち', num:'DT05', ms:null},
+    {name:'用賀', ruby:'ようが', num:'DT06', ms:null},
+    {name:'二子玉川', ruby:'ふたこたまがわ', num:'DT07', ms:'key'},
+    {name:'二子新地', ruby:'ふたこしんち', num:'DT08', ms:null},
+    {name:'高津', ruby:'たかつ', num:'DT09', ms:null},
+    {name:'溝の口', ruby:'みぞのくち', num:'DT10', ms:'key'},
+    {name:'梶が谷', ruby:'かじがや', num:'DT11', ms:null},
+    {name:'宮崎台', ruby:'みやざきだい', num:'DT12', ms:null},
+    {name:'宮前平', ruby:'みやまえだいら', num:'DT13', ms:null},
+    {name:'鷺沼', ruby:'さぎぬま', num:'DT14', ms:null},
+    {name:'たまプラーザ', ruby:'たまぷらーざ', num:'DT15', ms:'key'},
+    {name:'あざみ野', ruby:'あざみの', num:'DT16', ms:null},
+    {name:'江田', ruby:'えだ', num:'DT17', ms:null},
+    {name:'市が尾', ruby:'いちがお', num:'DT18', ms:null},
+    {name:'藤が丘', ruby:'ふじがおか', num:'DT19', ms:null},
+    {name:'青葉台', ruby:'あおばだい', num:'DT20', ms:'key'},
+    {name:'田奈', ruby:'たな', num:'DT21', ms:null},
+    {name:'長津田', ruby:'ながつだ', num:'DT22', ms:'key'},
+    {name:'つくし野', ruby:'つくしの', num:'DT23', ms:null},
+    {name:'すずかけ台', ruby:'すずかけだい', num:'DT24', ms:null},
+    {name:'南町田グランベリーパーク', ruby:'みなみまちだぐらんべりーぱーく', num:'DT25', ms:null},
+    {name:'つきみ野', ruby:'つきみの', num:'DT26', ms:null},
+    {name:'中央林間', ruby:'ちゅうおうりんかん', num:'DT27', ms:'key'}],
+});
+// 京王線 特急: 新宿→京王八王子（特急の停車駅11駅）
+ROUTES.push({
+  badge:'京王線（特急）', title:'🚃 新宿 → 京王八王子 あそびタイマー',
+  sub:'電車が京王八王子についたら あそびおわり', icon:'🚃', from:'新宿', to:'京王八王子',
+  endIcon:'⛰️', endTitle:'🚃 京王八王子に到着！', whistle:'train',
+  stations: [
+    {name:'新宿', ruby:'しんじゅく', num:'KO01', ms:'key'},
+    {name:'笹塚', ruby:'ささづか', num:'KO04', ms:null},
+    {name:'明大前', ruby:'めいだいまえ', num:'KO06', ms:'key'},
+    {name:'千歳烏山', ruby:'ちとせからすやま', num:'KO12', ms:null},
+    {name:'調布', ruby:'ちょうふ', num:'KO18', ms:'key'},
+    {name:'府中', ruby:'ふちゅう', num:'KO24', ms:'key'},
+    {name:'分倍河原', ruby:'ぶばいがわら', num:'KO25', ms:null},
+    {name:'聖蹟桜ヶ丘', ruby:'せいせきさくらがおか', num:'KO27', ms:null},
+    {name:'高幡不動', ruby:'たかはたふどう', num:'KO29', ms:'key'},
+    {name:'北野', ruby:'きたの', num:'KO33', ms:null},
+    {name:'京王八王子', ruby:'けいおうはちおうじ', num:'KO34', ms:'key'}],
+});
 
 // 向き: 0 = もともとの向き、1 = 逆向き
 const routeDir = ROUTES.map(() => 0);
 const FORWARD_ROUTES = ROUTES.map(r => ({...r}));
 // 各路線の向きの名前 [もともとの向き, 逆向き]
-const DIR_NAMES = [['東ゆき','西ゆき'], ['上り','下り'], ['上り','下り'], ['上り','下り'], ['下り','上り'], ['下り','上り'], ['右回り','左回り'], ['下り','上り'], ['東ゆき','西ゆき'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り']];
+const DIR_NAMES = [['東ゆき','西ゆき'], ['上り','下り'], ['上り','下り'], ['上り','下り'], ['下り','上り'], ['下り','上り'], ['右回り','左回り'], ['下り','上り'], ['東ゆき','西ゆき'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り'], ['下り','上り']];
 // 画面の左のボタン: 上り・右回り・東ゆき
-const DIR_ORDER = [[0,1],[0,1],[0,1],[0,1],[1,0],[1,0],[0,1],[1,0],[0,1],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]];
+const DIR_ORDER = [[0,1],[0,1],[0,1],[0,1],[1,0],[1,0],[0,1],[1,0],[0,1],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]];
 function reversedRoute(idx) {
   const r = FORWARD_ROUTES[idx], from = r.to, to = r.from, loop = idx === 6;
   const stations = r.stations.slice().reverse();
@@ -1994,7 +2133,7 @@ const ROUTE_LAND = [
   // 井の頭線: 渋谷→吉祥寺（park の景色は東京タワーが入るので使わない）
   spread(['city',1],['town',15]),
   // ロマンスカー: 新宿→箱根湯本
-  ['town','rural','fuji','mountain'],
+  ['town','town','town','river','town','rural','fuji','rural','mountain'],
   // つばめ: 博多→鹿児島中央
   ['city','rural','rural','rural','rural','rural','rural','mountain','sea','rural','mountain'],
   // かもめ: 武雄温泉→長崎
@@ -2003,13 +2142,21 @@ const ROUTE_LAND = [
   ['tokyo','city','rural','rural','town','mountain','alps','rural','rural','rural','rural'],
   // つばさ: 東京→新庄（福島から先は山形のさくらんぼ畑）
   ['tokyo','city','rural','rural','rural','mountain','rural','orchard','orchard','town','orchard','orchard','rural','rural','mountain'],
+  // 小田急線 急行: 新宿→小田原（登戸の手前で多摩川、海老名の先で相模川）
+  ['city','town','town','town','river','town','town','town','town','river','town','town','rural','rural','rural','rural','fuji','rural','rural','town'],
+  // 東横線: 渋谷→横浜（多摩川〜新丸子で多摩川）
+  spread(['city',2],['town',6],['river',1],['town',10],['city',1]),
+  // 田園都市線: 渋谷→中央林間（二子玉川〜二子新地で多摩川）
+  spread(['city',3],['town',3],['river',1],['town',19]),
+  // 京王線 特急: 新宿→京王八王子（中河原〜聖蹟桜ヶ丘で多摩川）
+  ['city','town','town','town','town','town','river','town','town','town'],
 ];
 // 新幹線・特急は、大きな駅の前後だけ街の風景にする
 const CITY_STATIONS = {'町田':'town','本厚木':'town','小田原':'town','熊本':'city','鹿児島中央':'city','長崎':'city','新潟':'city','長岡':'town','山形':'town','新函館北斗':'town','品川':'tokyo','東京':'tokyo','博多':'city','広島':'city','名古屋':'city','新大阪':'city','仙台':'city','新宿':'city',
   '小倉':'city','岡山':'city','京都':'town','姫路':'town','宇都宮':'town','郡山':'town','福島':'town','盛岡':'town','高崎':'town','長野':'town','富山':'town','金沢':'town','福井':'town','秋田':'town','松本':'town','甲府':'town','八戸':'town','新青森':'town'};
 function landAt(pos) {
   const seg = Math.max(0, Math.min(N-2, Math.floor(pos + 1e-9)));
-  if (![0,2,6,8,9].includes(routeIdx)) {
+  if (![0,2,6,8,9,15,16,17,18].includes(routeIdx)) {
     const near = Math.round(pos);
     const urban = STATIONS[near] && CITY_STATIONS[STATIONS[near].name];
     if (urban && Math.abs(pos - near) < 0.18) return urban;
