@@ -1,12 +1,12 @@
 """ride-preview.html から全アナウンス文を集めて JSON に出す。
-使い方: python3 scripts/collect-voice-texts.py 出力先.json [路線番号...]  (省略時は全9路線)
+使い方: python3 scripts/collect-voice-texts.py 出力先.json [路線番号...]  (省略時は全路線)
 駅名（漢字）と読みの一覧も 出力先.stations.json に出す（fix-voice-reading.py がアクセントに使う）
 必要: pip install playwright && playwright install chromium
 """
 import asyncio, json, subprocess, sys, time, pathlib
 from playwright.async_api import async_playwright
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-JS = """routes => { const out = {};
+JS = """routes => { const out = {}; routes = routes.length ? routes : ROUTES.map((_, i) => i);
   for (const r of routes) { const set = new Set();
     for (let slot = 0; slot < 2; slot++) {
       selectRoute(r);
@@ -21,7 +21,7 @@ JS = """routes => { const out = {};
   }
   return out; }"""
 async def main():
-    routes = [int(a) for a in sys.argv[2:]] or list(range(9))
+    routes = [int(a) for a in sys.argv[2:]]  # 空なら全路線
     server = subprocess.Popen([sys.executable, '-m', 'http.server', '8815'], cwd=ROOT,
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:

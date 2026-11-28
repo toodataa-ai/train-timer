@@ -10,7 +10,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**テスト版36の内容**。2026-11-26 に利用者の「本番OK」で反映）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=36 ＝ `ride-preview.html`（v36）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=37 ＝ `ride-preview.html`（v37）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -51,6 +51,14 @@ cp tests/train-timer.test.cjs /tmp/pv/tests/
 cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
 ```
   テスト版で路線・BGM・終点の動きなどを変えたら、ここで落ちたテストを本番反映時に直す
+
+## テスト版にあって本番にない変更（v37〜）
+- v37: 京王井の頭線（各駅停車 渋谷→吉祥寺 全17駅、IN01〜IN17、路線9）と小田急ロマンスカー「はこね」（新宿→町田→本厚木→小田原→箱根湯本、路線10）を追加。どちらも上り・下りを選べる
+  - ロマンスカーの停車駅は列車ごとに違うので、代表的な駅にした。駅間の分数（SEG_MINUTES）はどちらも概算
+  - 路線ごとの配列（TRAIN_STYLES・SEG_MINUTES・ROUTE_SPEED・DIR_NAMES・DIR_ORDER・ROUTE_LAND・BAR_STATIONS）とボタン・色・body のクラスに追加。録音は全路線（`hasVoice`）
+  - 井の頭線の景色に park は使わない（park の景色には東京タワーが出るため）
+  - 井の頭線の明大前・駒場東大前・池ノ上・西永福・永福町は、カタカナだと読みが途中で切れるので ACCENT でまとめた
+  - 本番反映のときは tests/train-timer.test.cjs の路線一覧（11路線・ボタン11個・井の頭線17駅・ロマンスカー5駅）を直す（今はテスト版で1件落ちる）
 
 ## 2026-11-26 に本番へ反映した変更（v16〜v36）
 今はテスト版と本番の差は、テスト版の表示（preview-label）と title だけ。
