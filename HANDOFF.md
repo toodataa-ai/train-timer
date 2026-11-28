@@ -10,7 +10,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**テスト版40の内容**。2026-11-28 に利用者の「本番OK」で反映）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=43 ＝ `ride-preview.html`（v43）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=44 ＝ `ride-preview.html`（v44）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -75,6 +75,7 @@ cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
   - 路線19: JR埼京線・りんかい線 直通 各駅停車 大宮→新木場（全26駅。JA26〜JA08、R07〜R01）。JR のグループに入れた
   - 馬車道・新高島・戸田公園の読みを ACCENT でまとめた
   - 本番反映のときは tests/train-timer.test.cjs の路線一覧を20路線（ボタン20個）に直す（今はテスト版で1件落ちる）
+- v44: ページを開いたときの路線を はやぶさ（路線4）にした（`let routeIdx = 4`、末尾の `selectRoute(4)`、rb4 に active）
 
 ## 2026-11-28 に本番へ反映した変更（v37〜v40）
 今はテスト版と本番の差は、テスト版の表示（preview-label）と title だけ。

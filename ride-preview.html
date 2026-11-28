@@ -442,7 +442,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版43】私鉄4路線追加・停車駅の見直し・E235系・井の頭線の色・東横線をみなとみらい線直通に・埼京線とりんかい線直通を追加</div>
+<div class="preview-label">【テスト版44】私鉄4路線追加・停車駅の見直し・E235系・井の頭線の色・東横線をみなとみらい線直通に・埼京線とりんかい線直通・最初の路線をはやぶさに</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -451,11 +451,11 @@ body > .wake-panel[hidden] { display: none; }
   <div class="route-group" id="rgShinkansen">新幹線</div>
   <div class="route-group" id="rgJR">JR</div>
   <div class="route-group" id="rgPrivate">私鉄</div>
-  <button class="route-btn active" id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
+  <button class="route-btn"        id="rb0" onclick="selectRoute(0)">🚃 総武線<br><small>三鷹→千葉</small></button>
   <button class="route-btn"        id="rb1" onclick="selectRoute(1)">🚄 のぞみ<br><small>博多→東京</small></button>
   <button class="route-btn"        id="rb2" onclick="selectRoute(2)">🟠 中央線<br><small>高尾→東京</small></button>
   <button class="route-btn"        id="rb3" onclick="selectRoute(3)">🚆 あずさ<br><small>松本→新宿</small></button>
-  <button class="route-btn"        id="rb4" onclick="selectRoute(4)">🚄 はやぶさ<br><small>東京→新函館北斗</small></button>
+  <button class="route-btn active" id="rb4" onclick="selectRoute(4)">🚄 はやぶさ<br><small>東京→新函館北斗</small></button>
   <button class="route-btn"        id="rb5" onclick="selectRoute(5)">🚄 かがやき<br><small>東京→敦賀</small></button>
   <button class="route-btn"        id="rb6" onclick="selectRoute(6)">🟢 山手線<br><small>外回り・一周</small></button>
   <button class="route-btn"        id="rb7" onclick="selectRoute(7)">🚄 こまち<br><small>東京→秋田</small></button>
@@ -752,7 +752,7 @@ const ROUTES = [
 // ============================================================
 // 状態
 // ============================================================
-let routeIdx = 0;
+let routeIdx = 4;
 let STATIONS = [], N = 0;
 let totalMs = 0, remainMs = 0;
 let startTime = null;   // Date.now() at start, adjusted for pauses
@@ -2582,7 +2582,7 @@ function showToast(msg) {
 // ============================================================
 // 初期化 — scriptの末尾で直接実行（ローカルHTML対応）
 // ============================================================
-selectRoute(0);
+selectRoute(4); // 最初に表示する路線は はやぶさ
 initSeek();
 document.querySelectorAll('.audio-hint').forEach(addFurigana);
 loadBGMerBundle();
