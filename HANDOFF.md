@@ -10,7 +10,7 @@
 ## サイト
 - リポジトリ: toodataa-ai/train-timer（main を GitHub Pages で公開。push 先は main）
 - 本番: https://toodataa-ai.github.io/train-timer/ ＝ `index.html`（**テスト版40の内容**。2026-11-28 に利用者の「本番OK」で反映）
-- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=42 ＝ `ride-preview.html`（v42）
+- テスト: https://toodataa-ai.github.io/train-timer/ride-preview.html?v=43 ＝ `ride-preview.html`（v43）
 - 1ファイル構成（CSS/JSは埋め込み）。子ども向けの電車テーマの遊びタイマーで、操作は大人。
 
 ## 録音アナウンス（v25で全路線に。実機確認待ち）
@@ -70,7 +70,11 @@ cd /tmp/pv && node --test tests/train-timer.test.cjs   # 17件
     - はやぶさ・こまち・山手線・江ノ電は「全駅をめぐる」演出（注意書きあり）のまま
   - 車両: 総武線・山手線を E235 系の見た目（TRAIN_STYLES の kind 'e235'。ドアの縦帯と黒い前面）、井の頭線は1000系（銀の車体、前面の色は選ぶたびに7色から。INOKASHIRA_COLORS。TRAIN_STYLES の6番目＝前面の色）
   - 私鉄のボタンは1行に4つ（京王線・井の頭線・小田急線・ロマンスカー／東横線・田園都市線・江ノ電）
-  - 本番反映のときは tests/train-timer.test.cjs の路線一覧を19路線（ボタン19個）に直す（今はテスト版で1件落ちる）
+- v43:
+  - 東横線をみなとみらい線に直通（渋谷→元町・中華街、全26駅。横浜の先は MM02〜MM06）
+  - 路線19: JR埼京線・りんかい線 直通 各駅停車 大宮→新木場（全26駅。JA26〜JA08、R07〜R01）。JR のグループに入れた
+  - 馬車道・新高島・戸田公園の読みを ACCENT でまとめた
+  - 本番反映のときは tests/train-timer.test.cjs の路線一覧を20路線（ボタン20個）に直す（今はテスト版で1件落ちる）
 
 ## 2026-11-28 に本番へ反映した変更（v37〜v40）
 今はテスト版と本番の差は、テスト版の表示（preview-label）と title だけ。
