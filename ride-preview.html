@@ -423,7 +423,7 @@ body > .wake-panel[hidden] { display: none; }
 </head>
 <body>
 
-<div class="preview-label">【テスト版38】京王井の頭線とロマンスカーを追加・駅が景色と同じ速さで近づくように</div>
+<div class="preview-label">【テスト版39】京王井の頭線とロマンスカーを追加・駅が景色と同じ速さで近づくように・「次は終点、〇〇です」</div>
 <div class="dir-row" id="dirRow">
   <button type="button" class="route-btn-dir" id="dir0" onclick="selectDirection(0)"></button>
   <button type="button" class="route-btn-dir" id="dir1" onclick="selectDirection(1)"></button>
@@ -2107,7 +2107,7 @@ function handleStart() {
       showToast(ROUTES[routeIdx].icon + ' ' + st0.name + 'を発車');
       if (announceOn && st1) {
         queueAnnouncement(function(){
-          if (running) speakText(st0.name + 'を発車しました。次は' + st1.name + 'です！');
+          if (running) speakText(departText(0, '！'));
         }, 1400); // ドアの音が終わってから
       }
     }
@@ -2135,6 +2135,10 @@ function tick() {
   if (remainMs <= 0) { finish(); }
 }
 
+// 「〇〇を発車しました。次は△△です」。次が終点なら「次は終点、△△です」（音声の文は録音と一字一句同じにすること）
+function departText(i, mark) {
+  return STATIONS[i].name + 'を発車しました。次は' + (i + 1 === N - 1 ? '終点、' : '') + STATIONS[i+1].name + 'です' + mark;
+}
 function onStationReached(idx) {
   const st = STATIONS[idx];
   const next = STATIONS[idx+1];
@@ -2143,7 +2147,7 @@ function onStationReached(idx) {
   if (announceOn) {
     const txt = isLast
       ? '終点、' + st.name + 'に到着しました。あそびじかん、しゅうりょうです。'
-      : st.name + 'を発車しました。次は' + next.name + 'です。';
+      : departText(idx, '。');
     speakText(coupleSpeech(idx) + txt);
   }
 }

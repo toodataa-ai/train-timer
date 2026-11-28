@@ -11,7 +11,7 @@ JS = """routes => { const out = {}; routes = routes.length ? routes : ROUTES.map
     for (let slot = 0; slot < 2; slot++) {
       selectRoute(r);
       if (DIR_ORDER[r] && routeDir[r] !== DIR_ORDER[r][slot]) selectDirection(slot);
-      set.add(toSpeechText(STATIONS[0].name + 'を発車しました。次は' + STATIONS[1].name + 'です！'));
+      set.add(toSpeechText(departText(0, '！')));
       const keep = speakText; speakText = t => set.add(toSpeechText(t)); announceOn = true;
       for (let i = 1; i < N; i++) onStationReached(i);
       speakText = keep;
